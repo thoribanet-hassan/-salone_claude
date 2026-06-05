@@ -13,6 +13,9 @@ export default function LoginPage() {
         <div className="surface p-6">
           <LoginForm />
         </div>
+        <a href="/register" className="muted text-center text-sm no-underline">
+          ليس لديك محل؟ أنشئ محلاً جديداً
+        </a>
       </div>
     </main>
   );

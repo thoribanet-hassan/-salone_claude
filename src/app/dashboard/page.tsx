@@ -2,6 +2,9 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { themeFor } from "@/lib/theme";
+import { joinUrlFor } from "@/lib/url";
+import ServeView from "../serve/ServeView";
+import QrActions from "../q/[slug]/QrActions";
 import {
   addBarberAction,
   regenerateCodeAction,
@@ -34,7 +37,18 @@ export default async function DashboardPage() {
   });
   if (!shop) redirect("/login");
 
+  // المدير حلاق أيضاً — نجلب حالة خدمته ليتحكّم من نفس اللوحة
+  const managerId = BigInt(session.userId);
+  const [manager, current, waitingAssigned, waitingPool] = await Promise.all([
+    prisma.user.findUnique({ where: { id: managerId } }),
+    prisma.ticket.findFirst({ where: { barberId: managerId, status: "serving" }, include: { service: true } }),
+    prisma.ticket.count({ where: { barberId: managerId, status: "waiting" } }),
+    prisma.ticket.count({ where: { shopId, barberId: null, status: "waiting" } }),
+  ]);
+
   const theme = themeFor(shop.facilityType);
+  const isManual = shop.settings?.countdownMode === "manual";
+  const joinUrl = joinUrlFor(shop.slug);
   const st = shop.settings;
   const dur = (barberId: bigint, serviceId: bigint) =>
     shop.users.find((b) => b.id === barberId)?.barberServices.find((x) => x.serviceId === serviceId)?.duration ??
@@ -56,11 +70,43 @@ export default async function DashboardPage() {
           <h1 className="text-2xl font-extrabold">{shop.name}</h1>
           <p className="muted text-xs mt-1">رمز المحل: {shop.shopCode}</p>
           <div className="flex gap-2 justify-center mt-3 text-sm">
-            <a href="/serve" className="surface px-3 py-2 font-bold no-underline">شاشة الخدمة</a>
-            <a href={`/q/${shop.slug}`} className="surface px-3 py-2 font-bold no-underline">ملصق QR</a>
+            <a href={`/q/${shop.slug}`} className="surface px-3 py-2 font-bold no-underline">ملصق QR كامل</a>
             <a href="/api/logout" className="surface px-3 py-2 font-bold no-underline">خروج</a>
           </div>
         </header>
+
+        {/* خدمة العملاء (المدير حلاق أيضاً) */}
+        {manager && (
+          <section className="surface p-5">
+            <h2 className="font-extrabold mb-3">خدمة العملاء</h2>
+            <ServeView
+              theme={theme.className}
+              shopName={shop.name}
+              barberName={manager.name}
+              role="manager"
+              status={manager.status}
+              isManual={isManual}
+              waitingCount={waitingAssigned + waitingPool}
+              embedded
+              current={
+                current
+                  ? { ticketNumber: current.ticketNumber, customerName: current.customerName, serviceName: current.service?.name ?? null }
+                  : null
+              }
+            />
+          </section>
+        )}
+
+        {/* رمز QR للمحل — للطباعة والتعليق والمشاركة */}
+        <section className="surface p-5 flex flex-col items-center gap-3">
+          <h2 className="font-extrabold self-start">رمز QR للمحل</h2>
+          <p className="muted text-sm self-start -mt-2">علّقه في الواجهة بعد طباعته، أو شاركه عبر واتساب وصفحتك.</p>
+          <div className="bg-white p-3 rounded-xl">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={`/api/qr/${shop.slug}?format=svg`} alt="QR" width={200} height={200} style={{ width: 200, height: 200, display: "block" }} />
+          </div>
+          <QrActions slug={shop.slug} shopName={shop.name} joinUrl={joinUrl} />
+        </section>
 
         {/* الإعدادات */}
         <section className="surface p-5">

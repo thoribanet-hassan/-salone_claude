@@ -15,12 +15,13 @@ export default function Home() {
 
         <div className="surface p-6 flex flex-col gap-3">
           <p className="font-bold">الزبون يدخل بمسح رمز QR الخاص بالمحل — بدون أي تطبيق.</p>
-          <Link href="/login" className="btn-accent py-4 text-lg no-underline">
+          <Link href="/register" className="btn-accent py-4 text-lg no-underline">
+            أنشئ محلك الآن
+          </Link>
+          <Link href="/login" className="surface py-3 font-bold no-underline">
             دخول المدير / الموظف
           </Link>
         </div>
-
-        <p className="muted text-xs">لإنشاء محل جديد، تواصل مع مزوّد الخدمة.</p>
       </div>
     </main>
   );

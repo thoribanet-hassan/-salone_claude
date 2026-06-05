@@ -25,6 +25,7 @@ interface Props {
   isManual: boolean;
   waitingCount: number;
   current: Current | null;
+  embedded?: boolean; // داخل لوحة المدير: نخفي الترويسة والخروج
 }
 
 export default function ServeView(props: Props) {
@@ -50,15 +51,17 @@ export default function ServeView(props: Props) {
 
   return (
     <div className="w-full max-w-md flex flex-col gap-5">
-      <header className="text-center mt-1">
-        <p className="muted text-sm">{props.shopName}</p>
-        <h1 className="text-xl font-extrabold">{props.barberName}</h1>
-        {props.role === "manager" && (
-          <a href="/dashboard" className="muted text-xs underline">
-            ← لوحة التحكم
-          </a>
-        )}
-      </header>
+      {!props.embedded && (
+        <header className="text-center mt-1">
+          <p className="muted text-sm">{props.shopName}</p>
+          <h1 className="text-xl font-extrabold">{props.barberName}</h1>
+          {props.role === "manager" && (
+            <a href="/dashboard" className="muted text-xs underline">
+              ← لوحة التحكم
+            </a>
+          )}
+        </header>
+      )}
 
       {/* حالة الموظف */}
       <div className="surface p-4 flex items-center justify-between">
@@ -136,9 +139,11 @@ export default function ServeView(props: Props) {
         )}
       </div>
 
-      <a href="/api/logout" className="muted text-center text-xs underline mt-2">
-        تسجيل الخروج
-      </a>
+      {!props.embedded && (
+        <a href="/api/logout" className="muted text-center text-xs underline mt-2">
+          تسجيل الخروج
+        </a>
+      )}
     </div>
   );
 }
