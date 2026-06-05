@@ -129,6 +129,50 @@ export async function queueInfoFor(ticket: Ticket): Promise<QueueInfo> {
   return { peopleAhead: ahead.length, remainingMinutes: Math.round(sum / parallelism) };
 }
 
+// إنهاء خدمة العميل الحالي وتحرير الحلاق
+export async function completeService(barberId: bigint): Promise<boolean> {
+  const current = await prisma.ticket.findFirst({
+    where: { barberId, status: "serving" },
+  });
+  if (!current) return false;
+  await prisma.$transaction([
+    prisma.ticket.update({
+      where: { id: current.id },
+      data: { status: "completed", completedAt: new Date() },
+    }),
+    prisma.user.update({ where: { id: barberId }, data: { status: "available" } }),
+  ]);
+  return true;
+}
+
+// تخطّي العميل الحالي (مثلاً لم يحضر) وتحرير الحلاق
+export async function skipCurrent(barberId: bigint): Promise<boolean> {
+  const current = await prisma.ticket.findFirst({
+    where: { barberId, status: "serving" },
+  });
+  if (!current) return false;
+  await prisma.$transaction([
+    prisma.ticket.update({
+      where: { id: current.id },
+      data: { status: "skipped", completedAt: new Date() },
+    }),
+    prisma.user.update({ where: { id: barberId }, data: { status: "available" } }),
+  ]);
+  return true;
+}
+
+// تبديل حالة الحلاق (متاح/غير متاح) — لا يُسمح بـ unavailable أثناء الخدمة
+export async function setBarberStatus(
+  barberId: bigint,
+  status: "available" | "unavailable"
+): Promise<void> {
+  const serving = await prisma.ticket.findFirst({
+    where: { barberId, status: "serving" },
+  });
+  if (serving) return; // أنهِ العميل أولاً
+  await prisma.user.update({ where: { id: barberId }, data: { status } });
+}
+
 // الوضع اليدوي: المدير يطلق عدّاد العميل التالي عند اقتراب انصراف زبون
 // يضبط ready_at = الآن + minutes على أقدم تذكرة منتظرة (العميل التالي)
 export async function markNextCustomerReady(

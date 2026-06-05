@@ -1,6 +1,13 @@
 // بذرة محل من النوع "طابور عام" — مطعم مزدحم (حجز موحّد بلا اختيار موظف)
 import { PrismaClient } from "@prisma/client";
+import { scryptSync, randomBytes } from "crypto";
 const prisma = new PrismaClient();
+
+function hashPassword(pw) {
+  const salt = randomBytes(16).toString("hex");
+  return `${salt}:${scryptSync(pw, salt, 64).toString("hex")}`;
+}
+const DEMO_PW = hashPassword("salon123");
 
 async function main() {
   const slug = "restaurant-demo";
@@ -24,7 +31,7 @@ async function main() {
       },
       users: {
         create: [
-          { name: "فهد (المدير)", email: "fahd@demo.test", passwordHash: "demo", role: "manager", status: "available", avgServiceTime: 15 },
+          { name: "فهد (المدير)", email: "fahd@demo.test", passwordHash: DEMO_PW, role: "manager", status: "available", avgServiceTime: 15 },
           // "محطات خدمة" داخلية لضبط التوازي والمدة — لا يراها الزبون
           { name: "محطة 1", role: "barber", loginCode: "7001", status: "available", avgServiceTime: 15 },
           { name: "محطة 2", role: "barber", loginCode: "7002", status: "available", avgServiceTime: 15 },

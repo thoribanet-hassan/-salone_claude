@@ -1,0 +1,132 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import { prisma } from "@/lib/db";
+import { getSession } from "@/lib/auth";
+import { generateLoginCode } from "@/lib/shop";
+import type { CountdownMode } from "@prisma/client";
+
+async function requireManager() {
+  const s = await getSession();
+  if (!s || s.role !== "manager") redirect("/login");
+  return { userId: BigInt(s.userId), shopId: BigInt(s.shopId) };
+}
+
+const PLAN_LIMITS: Record<string, number> = {
+  basic: 3,
+  pro: 7,
+  premium: 15,
+  enterprise: Infinity,
+};
+
+// ===== الحلاقون =====
+export async function addBarberAction(formData: FormData) {
+  const { shopId } = await requireManager();
+  const name = String(formData.get("name") ?? "").trim();
+  const avg = parseInt(String(formData.get("avgServiceTime") ?? "20"), 10) || 20;
+  if (!name) return;
+
+  const shop = await prisma.shop.findUnique({ where: { id: shopId } });
+  const activeCount = await prisma.user.count({
+    where: { shopId, role: "barber", isActive: true },
+  });
+  if (activeCount >= (PLAN_LIMITS[shop?.plan ?? "basic"] ?? 3)) return; // وصل الحد
+
+  const loginCode = await generateLoginCode(shopId);
+  const barber = await prisma.user.create({
+    data: { shopId, name, role: "barber", avgServiceTime: avg, loginCode, status: "available" },
+  });
+  // إنشاء صفوف المصفوفة لكل الخدمات بالمدة الافتراضية
+  const services = await prisma.service.findMany({ where: { shopId } });
+  if (services.length) {
+    await prisma.barberService.createMany({
+      data: services.map((s) => ({ barberId: barber.id, serviceId: s.id, duration: s.defaultDuration })),
+    });
+  }
+  revalidatePath("/dashboard");
+}
+
+export async function regenerateCodeAction(formData: FormData) {
+  const { shopId } = await requireManager();
+  const barberId = BigInt(String(formData.get("barberId")));
+  const code = await generateLoginCode(shopId);
+  await prisma.user.update({ where: { id: barberId }, data: { loginCode: code } });
+  revalidatePath("/dashboard");
+}
+
+export async function toggleBarberAction(formData: FormData) {
+  await requireManager();
+  const barberId = BigInt(String(formData.get("barberId")));
+  const b = await prisma.user.findUnique({ where: { id: barberId } });
+  if (b) await prisma.user.update({ where: { id: barberId }, data: { isActive: !b.isActive } });
+  revalidatePath("/dashboard");
+}
+
+export async function deleteBarberAction(formData: FormData) {
+  const { userId } = await requireManager();
+  const barberId = BigInt(String(formData.get("barberId")));
+  if (barberId === userId) return; // لا يحذف المدير نفسه
+  await prisma.user.delete({ where: { id: barberId } });
+  revalidatePath("/dashboard");
+}
+
+// ===== الخدمات =====
+export async function addServiceAction(formData: FormData) {
+  const { shopId } = await requireManager();
+  const name = String(formData.get("name") ?? "").trim();
+  const dur = parseInt(String(formData.get("defaultDuration") ?? "20"), 10) || 20;
+  if (!name) return;
+  const count = await prisma.service.count({ where: { shopId } });
+  const service = await prisma.service.create({
+    data: { shopId, name, defaultDuration: dur, position: count + 1 },
+  });
+  const barbers = await prisma.user.findMany({ where: { shopId, role: "barber" } });
+  if (barbers.length) {
+    await prisma.barberService.createMany({
+      data: barbers.map((b) => ({ barberId: b.id, serviceId: service.id, duration: dur })),
+    });
+  }
+  revalidatePath("/dashboard");
+}
+
+export async function deleteServiceAction(formData: FormData) {
+  await requireManager();
+  const serviceId = BigInt(String(formData.get("serviceId")));
+  await prisma.service.delete({ where: { id: serviceId } });
+  revalidatePath("/dashboard");
+}
+
+export async function setDurationAction(formData: FormData) {
+  await requireManager();
+  const barberId = BigInt(String(formData.get("barberId")));
+  const serviceId = BigInt(String(formData.get("serviceId")));
+  const dur = parseInt(String(formData.get("duration") ?? "20"), 10) || 20;
+  await prisma.barberService.upsert({
+    where: { barberId_serviceId: { barberId, serviceId } },
+    update: { duration: dur },
+    create: { barberId, serviceId, duration: dur },
+  });
+  revalidatePath("/dashboard");
+}
+
+// ===== الإعدادات =====
+export async function updateSettingsAction(formData: FormData) {
+  const { shopId } = await requireManager();
+  const b = (k: string) => formData.get(k) === "on";
+  const mode = (String(formData.get("countdownMode")) === "manual" ? "manual" : "auto") as CountdownMode;
+  await prisma.shopSettings.update({
+    where: { shopId },
+    data: {
+      isOpen: b("isOpen"),
+      allowProviderChoice: b("allowProviderChoice"),
+      showExpectedTime: b("showExpectedTime"),
+      showPeopleAhead: b("showPeopleAhead"),
+      showBarberName: b("showBarberName"),
+      showCountdown: b("showCountdown"),
+      countdownMode: mode,
+    },
+  });
+  revalidatePath("/dashboard");
+  revalidatePath("/j/[slug]", "page");
+}

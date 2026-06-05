@@ -1,6 +1,15 @@
 // بذرة بيانات تجريبية: محلّان (حلاق رجالي + صالون نسائي) مع حلاقين
 import { PrismaClient } from "@prisma/client";
+import { scryptSync, randomBytes } from "crypto";
 const prisma = new PrismaClient();
+
+// نفس خوارزمية auth.ts لتشفير كلمة المرور
+function hashPassword(pw) {
+  const salt = randomBytes(16).toString("hex");
+  return `${salt}:${scryptSync(pw, salt, 64).toString("hex")}`;
+}
+// كلمة مرور المديرين التجريبيين
+const DEMO_PW = hashPassword("salon123");
 
 async function main() {
   // محل حلاقة رجالي
@@ -18,7 +27,7 @@ async function main() {
       settings: { create: { isOpen: true } },
       users: {
         create: [
-          { name: "أحمد (المدير)", email: "ahmed@demo.test", passwordHash: "demo", role: "manager", status: "available", avgServiceTime: 20 },
+          { name: "أحمد (المدير)", email: "ahmed@demo.test", passwordHash: DEMO_PW, role: "manager", status: "available", avgServiceTime: 20 },
           { name: "خالد", role: "barber", loginCode: "1111", status: "available", avgServiceTime: 20 },
           { name: "سعد", role: "barber", loginCode: "2222", status: "available", avgServiceTime: 30 },
         ],
@@ -41,7 +50,7 @@ async function main() {
       settings: { create: { isOpen: true } },
       users: {
         create: [
-          { name: "نورة (المديرة)", email: "noura@demo.test", passwordHash: "demo", role: "manager", status: "available", avgServiceTime: 25 },
+          { name: "نورة (المديرة)", email: "noura@demo.test", passwordHash: DEMO_PW, role: "manager", status: "available", avgServiceTime: 25 },
           { name: "سارة", role: "barber", loginCode: "3333", status: "available", avgServiceTime: 25 },
         ],
       },

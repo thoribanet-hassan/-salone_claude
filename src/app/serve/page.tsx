@@ -1,0 +1,54 @@
+import { redirect } from "next/navigation";
+import { getSession } from "@/lib/auth";
+import { prisma } from "@/lib/db";
+import { themeFor } from "@/lib/theme";
+import ServeView from "./ServeView";
+
+export const metadata = { title: "شاشة الموظف | صالون" };
+
+export default async function ServePage() {
+  const session = await getSession();
+  if (!session) redirect("/login");
+
+  const barberId = BigInt(session.userId);
+  const shopId = BigInt(session.shopId);
+
+  const [barber, shop, current, waitingAssigned, waitingPool] = await Promise.all([
+    prisma.user.findUnique({ where: { id: barberId } }),
+    prisma.shop.findUnique({ where: { id: shopId }, include: { settings: true } }),
+    prisma.ticket.findFirst({
+      where: { barberId, status: "serving" },
+      include: { service: true },
+    }),
+    prisma.ticket.count({ where: { barberId, status: "waiting" } }),
+    prisma.ticket.count({ where: { shopId, barberId: null, status: "waiting" } }),
+  ]);
+
+  if (!barber || !shop) redirect("/login");
+
+  const theme = themeFor(shop.facilityType);
+  const isManual = shop.settings?.countdownMode === "manual";
+
+  return (
+    <main className={`${theme.className} min-h-screen flex flex-col items-center px-5 py-6`}>
+      <ServeView
+        theme={theme.className}
+        shopName={shop.name}
+        barberName={barber.name}
+        role={session.role}
+        status={barber.status}
+        isManual={isManual}
+        waitingCount={waitingAssigned + waitingPool}
+        current={
+          current
+            ? {
+                ticketNumber: current.ticketNumber,
+                customerName: current.customerName,
+                serviceName: current.service?.name ?? null,
+              }
+            : null
+        }
+      />
+    </main>
+  );
+}
