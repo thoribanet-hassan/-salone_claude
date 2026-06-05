@@ -40,6 +40,7 @@ export default function ServeView(props: Props) {
   const router = useRouter();
   const [pending, start] = useTransition();
   const [msg, setMsg] = useState<string | null>(null);
+  const [readyMinutes, setReadyMinutes] = useState(10);
 
   // تحديث دوري خفيف ليرى الحلاق تغيّر الطابور
   useEffect(() => {
@@ -126,23 +127,37 @@ export default function ServeView(props: Props) {
           </button>
         )}
 
-        {/* الوضع اليدوي (مطعم): إطلاق عدّاد العميل التالي */}
+        {/* الوضع اليدوي (مطعم): مربع منزلق يحدّد الموظف به الوقت (1–60 دقيقة) */}
         {props.isManual && (
           <div className="surface p-4 mt-1">
-            <p className="font-bold text-sm mb-2">طاولة ستفرغ قريباً؟ نبّه العميل التالي:</p>
-            <div className="grid grid-cols-3 gap-2">
-              {[5, 10, 15].map((m) => (
-                <button
-                  key={m}
-                  disabled={pending}
-                  onClick={() => run(() => markReadyAction(m))}
-                  className="surface py-3 font-bold"
-                  style={{ background: "var(--surface-2)" }}
-                >
-                  {m} دقيقة
-                </button>
-              ))}
+            <p className="font-bold text-sm mb-3">طاولة ستفرغ قريباً؟ حدّد الوقت ونبّه العميل التالي:</p>
+            <div className="flex items-center justify-between mb-2">
+              <span className="muted text-sm">الوقت</span>
+              <span className="text-2xl font-extrabold" style={{ color: "var(--accent)" }}>
+                {readyMinutes} دقيقة
+              </span>
             </div>
+            <input
+              type="range"
+              min={1}
+              max={60}
+              step={1}
+              value={readyMinutes}
+              onChange={(e) => setReadyMinutes(parseInt(e.target.value, 10))}
+              className="w-full"
+              style={{ accentColor: "var(--accent)" }}
+            />
+            <div className="flex justify-between muted text-xs mt-1">
+              <span>1</span>
+              <span>60</span>
+            </div>
+            <button
+              disabled={pending}
+              onClick={() => run(() => markReadyAction(readyMinutes))}
+              className="btn-accent w-full py-3 mt-3 font-bold"
+            >
+              نبّه العميل التالي ({readyMinutes} دقيقة)
+            </button>
           </div>
         )}
       </div>

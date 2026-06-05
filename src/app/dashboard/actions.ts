@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { getSession } from "@/lib/auth";
 import { generateLoginCode } from "@/lib/shop";
+import { setBarberStatus } from "@/lib/queue";
 import type { CountdownMode } from "@prisma/client";
 
 async function requireManager() {
@@ -52,6 +53,15 @@ export async function regenerateCodeAction(formData: FormData) {
   const barberId = BigInt(String(formData.get("barberId")));
   const code = await generateLoginCode(shopId);
   await prisma.user.update({ where: { id: barberId }, data: { loginCode: code } });
+  revalidatePath("/dashboard");
+}
+
+// توفّر مؤقّت (غداء/مشوار): متاح ⇄ غير متاح — لا يمسّ الحساب
+export async function setAvailabilityAction(formData: FormData) {
+  await requireManager();
+  const barberId = BigInt(String(formData.get("barberId")));
+  const to = String(formData.get("to")) === "available" ? "available" : "unavailable";
+  await setBarberStatus(barberId, to);
   revalidatePath("/dashboard");
 }
 

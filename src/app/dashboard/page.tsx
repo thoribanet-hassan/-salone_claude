@@ -10,6 +10,7 @@ import {
   addBarberAction,
   regenerateCodeAction,
   toggleBarberAction,
+  setAvailabilityAction,
   deleteBarberAction,
   addServiceAction,
   deleteServiceAction,
@@ -163,18 +164,32 @@ export default async function DashboardPage() {
                   </span>
                 </div>
                 <p className="muted text-xs mt-1">أعطِ هذا الرمز للموظف ليدخل من «دخول الموظف» برمز المحل {shop.shopCode}.</p>
+                <p className="text-xs mt-1">
+                  الحالة:{" "}
+                  <span className="font-bold" style={{ color: b.status === "available" ? "var(--accent)" : "var(--text-muted)" }}>
+                    {b.status === "busy" ? "مشغول بعميل" : b.status === "available" ? "متاح" : "غير متاح (لا يدخل الدور)"}
+                  </span>
+                </p>
                 <div className="flex gap-2 mt-2 text-xs flex-wrap">
+                  {/* توفّر مؤقّت: غداء/مشوار */}
+                  <form action={setAvailabilityAction}>
+                    <input type="hidden" name="barberId" value={b.id.toString()} />
+                    <input type="hidden" name="to" value={b.status === "available" ? "unavailable" : "available"} />
+                    <button className="px-2 py-1 rounded surface font-bold">
+                      {b.status === "available" ? "اجعله غير متاح" : "اجعله متاحاً"}
+                    </button>
+                  </form>
                   <form action={regenerateCodeAction}>
                     <input type="hidden" name="barberId" value={b.id.toString()} />
                     <button className="px-2 py-1 rounded surface">تجديد الرمز</button>
                   </form>
                   <form action={toggleBarberAction}>
                     <input type="hidden" name="barberId" value={b.id.toString()} />
-                    <button className="px-2 py-1 rounded surface">{b.isActive ? "تعطيل" : "تفعيل"}</button>
+                    <button className="px-2 py-1 rounded surface">{b.isActive ? "إيقاف الحساب" : "تفعيل الحساب"}</button>
                   </form>
                   <form action={deleteBarberAction}>
                     <input type="hidden" name="barberId" value={b.id.toString()} />
-                    <button className="px-2 py-1 rounded surface text-red-400">حذف</button>
+                    <button className="px-2 py-1 rounded surface text-red-400">حذف نهائي</button>
                   </form>
                 </div>
               </div>
