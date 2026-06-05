@@ -59,6 +59,11 @@ export default function TicketView({
   const prevCountdownActiveRef = useRef(initial.countdownActive);
   liveRef.current = { remainingMinutes: state.remainingMinutes, peopleAhead: state.peopleAhead };
 
+  // العدّاد يُثبّت على لحظة هدف ليتناقص بسلاسة، ويُعاد ضبطه فقط حين تتغيّر تقدير الخادم
+  // (وإلا كان يقفز للأعلى كل مزامنة لأن "مجموع المدد" ثابت لا يتناقص مع الوقت)
+  const targetRef = useRef<number>(0);
+  const lastServerSecRef = useRef<number>(initial.remainingSeconds);
+
   // تفعيل الصوت (يتطلب تفاعل المستخدم بسبب سياسة المتصفح)
   const toggleSound = useCallback(() => {
     if (soundOn) {
@@ -85,7 +90,11 @@ export default function TicketView({
       if (res.ok) {
         const data: State = await res.json();
         setState(data);
-        setSecondsLeft(data.remainingSeconds); // إعادة بذر العدّاد عند كل مزامنة
+        // أعد تثبيت الهدف فقط إذا تغيّر تقدير الخادم (تحرّك الطابور) — وإلا اترك العدّاد يكمل تناقصه
+        if (data.remainingSeconds !== lastServerSecRef.current) {
+          lastServerSecRef.current = data.remainingSeconds;
+          targetRef.current = Date.now() + data.remainingSeconds * 1000;
+        }
         setOnline(true);
       }
     } catch {
@@ -101,10 +110,18 @@ export default function TicketView({
     return () => clearInterval(id);
   }, [resync]);
 
-  // العدّاد التنازلي الحي — ينقص ثانية كل ثانية بين عمليات المزامنة
+  // تثبيت لحظة الهدف عند أول تحميل
+  useEffect(() => {
+    targetRef.current = Date.now() + initial.remainingSeconds * 1000;
+  }, [initial.remainingSeconds]);
+
+  // العدّاد التنازلي الحي — يُحسب من لحظة الهدف الثابتة (يتناقص فعلياً مع الوقت)
   useEffect(() => {
     if (state.status !== "waiting") return;
-    const id = setInterval(() => setSecondsLeft((x) => Math.max(0, x - 1)), 1000);
+    const tick = () =>
+      setSecondsLeft(Math.max(0, Math.round((targetRef.current - Date.now()) / 1000)));
+    tick();
+    const id = setInterval(tick, 1000);
     return () => clearInterval(id);
   }, [state.status]);
 
@@ -206,18 +223,20 @@ export default function TicketView({
       </div>
 
       {/* العدّاد التنازلي الحي — العنصر المحوري */}
-      {showCountdown && (
-        <div className="surface p-7 text-center flex flex-col items-center gap-1">
-          <p className="muted text-sm">الوقت المتبقي لدورك (تقريبي)</p>
-          <p
-            className="text-6xl font-extrabold tabular-nums"
-            style={{ color: "var(--accent)" }}
-          >
-            {fmt(secondsLeft)}
-          </p>
-          <p className="muted text-xs">دقيقة : ثانية</p>
-        </div>
-      )}
+      {showCountdown &&
+        (secondsLeft <= 0 ? (
+          <div className="surface p-7 text-center" style={{ background: "var(--accent)", color: "var(--accent-contrast)" }}>
+            <p className="text-3xl font-extrabold">أنت التالي — تجهّز 🎉</p>
+          </div>
+        ) : (
+          <div className="surface p-7 text-center flex flex-col items-center gap-1">
+            <p className="muted text-sm">الوقت المتبقي لدورك (تقريبي)</p>
+            <p className="text-6xl font-extrabold tabular-nums" style={{ color: "var(--accent)" }}>
+              {fmt(secondsLeft)}
+            </p>
+            <p className="muted text-xs">دقيقة : ثانية</p>
+          </div>
+        ))}
 
       <div
         className="surface p-6 text-center"
