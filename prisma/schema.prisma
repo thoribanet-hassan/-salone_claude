@@ -4,8 +4,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL") // اتصال مجمّع (pooled) للتشغيل على Vercel
+  directUrl = env("DIRECT_URL") // اتصال مباشر للترحيلات (migrations)
 }
 
 // نوع المنشأة — يحدّد الثيم والمصطلحات (رجالي/نسائي/طابور عام)

@@ -1,8 +1,11 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { TicketStatus } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { serviceDateFor } from "@/lib/queue";
+
+const ACTIVE_STATUSES: TicketStatus[] = ["waiting", "serving"];
 
 export interface FindState {
   error?: string;
@@ -26,7 +29,7 @@ export async function findTicketAction(
   const base = {
     shopId: shop.id,
     serviceDate: today,
-    status: { in: ["waiting", "serving"] as const },
+    status: { in: ACTIVE_STATUSES },
   };
 
   // الهاتف مفتاح دقيق ← يُقدَّم إن وُجد
