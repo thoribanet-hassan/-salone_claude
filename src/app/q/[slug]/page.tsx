@@ -20,7 +20,7 @@ export default async function QrPage({
     <main className={`${theme.className} min-h-screen flex flex-col items-center px-5 py-8`}>
       <div className="w-full max-w-md flex flex-col gap-6 items-center">
         {/* الملصق القابل للطباعة والتعليق في المحل */}
-        <div id="poster" className="surface w-full p-8 flex flex-col items-center gap-5 text-center">
+        <div id="poster" className="qr-print-area surface w-full p-8 flex flex-col items-center gap-5 text-center">
           <div>
             <p className="muted text-sm">{theme.label}</p>
             <h1 className="text-3xl font-extrabold mt-1">{shop.name}</h1>

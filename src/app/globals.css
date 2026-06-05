@@ -104,11 +104,8 @@ body {
   outline-offset: 1px;
 }
 
-/* ====== الطباعة: يظهر الملصق فقط بخلفية بيضاء نظيفة ====== */
+/* ====== الطباعة: يُطبع QR فقط (منطقة qr-print-area) دون بقية الصفحة ====== */
 @media print {
-  .no-print {
-    display: none !important;
-  }
   body,
   .theme-barber,
   .theme-salon,
@@ -116,8 +113,23 @@ body {
     background: #fff !important;
     color: #111 !important;
   }
-  #poster {
+  /* أخفِ كل شيء ثم أظهر منطقة الطباعة فقط */
+  body * {
+    visibility: hidden !important;
+  }
+  .qr-print-area,
+  .qr-print-area * {
+    visibility: visible !important;
+  }
+  .qr-print-area {
+    position: absolute !important;
+    inset: 0 auto auto 0 !important;
+    width: 100% !important;
     border: none !important;
     box-shadow: none !important;
+    text-align: center;
+  }
+  .no-print {
+    display: none !important;
   }
 }

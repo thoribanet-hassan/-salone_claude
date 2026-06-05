@@ -108,11 +108,16 @@ export default async function DashboardPage() {
 
         {/* رمز QR للمحل — للطباعة والتعليق والمشاركة */}
         <section className="surface p-5 flex flex-col items-center gap-3">
-          <h2 className="font-extrabold self-start">رمز QR للمحل</h2>
-          <p className="muted text-sm self-start -mt-2">علّقه في الواجهة بعد طباعته، أو شاركه عبر واتساب وصفحتك.</p>
-          <div className="bg-white p-3 rounded-xl">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={`/api/qr/${shop.slug}?format=svg`} alt="QR" width={200} height={200} style={{ width: 200, height: 200, display: "block" }} />
+          <h2 className="font-extrabold self-start no-print">رمز QR للمحل</h2>
+          <p className="muted text-sm self-start -mt-2 no-print">علّقه في الواجهة بعد طباعته، أو شاركه عبر واتساب وصفحتك.</p>
+          {/* المنطقة القابلة للطباعة وحدها */}
+          <div className="qr-print-area flex flex-col items-center gap-3 py-2">
+            <p className="font-extrabold text-lg">{shop.name}</p>
+            <div className="bg-white p-3 rounded-xl">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={`/api/qr/${shop.slug}?format=svg`} alt="QR" width={220} height={220} style={{ width: 220, height: 220, display: "block" }} />
+            </div>
+            <p className="font-bold">امسح وادخل لحجز دورك</p>
           </div>
           <QrActions slug={shop.slug} shopName={shop.name} joinUrl={joinUrl} />
         </section>
@@ -150,8 +155,14 @@ export default async function DashboardPage() {
               <div key={b.id.toString()} className="surface p-3" style={{ background: "var(--surface-2)", opacity: b.isActive ? 1 : 0.5 }}>
                 <div className="flex items-center justify-between">
                   <span className="font-bold">{b.name}</span>
-                  <span className="muted text-sm">رمز: {b.loginCode ?? "—"}</span>
+                  <span className="text-sm">
+                    رمز دخوله:{" "}
+                    <span className="font-extrabold text-lg" style={{ color: "var(--accent)" }}>
+                      {b.loginCode ?? "—"}
+                    </span>
+                  </span>
                 </div>
+                <p className="muted text-xs mt-1">أعطِ هذا الرمز للموظف ليدخل من «دخول الموظف» برمز المحل {shop.shopCode}.</p>
                 <div className="flex gap-2 mt-2 text-xs flex-wrap">
                   <form action={regenerateCodeAction}>
                     <input type="hidden" name="barberId" value={b.id.toString()} />
@@ -170,7 +181,7 @@ export default async function DashboardPage() {
             ))}
           </div>
           <form action={addBarberAction} className="flex flex-col gap-2">
-            <input name="name" placeholder="اسم الموظف الجديد" className="input-field px-3 py-2" />
+            <input name="name" required placeholder="اسم الموظف الجديد" className="input-field px-3 py-2" />
             <input name="avgServiceTime" type="number" defaultValue={20} placeholder="مدة افتراضية (دقيقة)" className="input-field px-3 py-2" />
             <button className="btn-accent py-3 font-bold">+ إضافة موظف</button>
           </form>
@@ -191,10 +202,11 @@ export default async function DashboardPage() {
             ))}
           </div>
           <form action={addServiceAction} className="flex gap-2">
-            <input name="name" placeholder="اسم الخدمة" className="input-field px-3 py-2 flex-1" />
+            <input name="name" required placeholder="اسم أي خدمة تريدها" className="input-field px-3 py-2 flex-1" />
             <input name="defaultDuration" type="number" defaultValue={20} className="input-field px-3 py-2 w-20" />
             <button className="btn-accent px-3 font-bold">+</button>
           </form>
+          <p className="muted text-xs mt-2">اكتب أي اسم خدمة تريده — غير مقيّد بأنواع جاهزة.</p>
         </section>
 
         {/* مصفوفة الأزمنة */}
