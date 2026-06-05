@@ -16,7 +16,8 @@ export default async function JoinPage({
     include: {
       settings: true,
       users: {
-        where: { role: "barber", isActive: true },
+        // المدير حلاق أيضاً → نعدّه مزوّد خدمة
+        where: { role: { in: ["manager", "barber"] }, isActive: true },
         orderBy: { name: "asc" },
       },
       services: {
@@ -84,6 +85,7 @@ export default async function JoinPage({
                   id: b.id.toString(),
                   name: b.name,
                 }))}
+                allowServiceChoice={!!shop.settings?.allowServiceChoice}
                 services={shop.services.map((s) => ({
                   id: s.id.toString(),
                   name: s.name,
@@ -108,7 +110,7 @@ export default async function JoinPage({
           حجزت سابقاً؟ استرجع تذكرتك
         </a>
 
-        <p className="muted text-center text-xs">مدعوم بنظام «صالون»</p>
+        <p className="muted text-center text-xs">مدعوم بنظام «دورك»</p>
       </div>
     </main>
   );

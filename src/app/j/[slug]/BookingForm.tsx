@@ -20,6 +20,7 @@ interface Props {
   barbers: BarberOption[];
   services: ServiceOption[];
   showProviderChoice: boolean;
+  allowServiceChoice: boolean;
 }
 
 function SubmitButton() {
@@ -31,7 +32,8 @@ function SubmitButton() {
   );
 }
 
-export default function BookingForm({ slug, barbers, services, showProviderChoice }: Props) {
+export default function BookingForm({ slug, barbers, services, showProviderChoice, allowServiceChoice }: Props) {
+  const showServicePicker = allowServiceChoice && services.length > 1;
   const [state, formAction] = useActionState<BookingState, FormData>(
     createBookingAction,
     {}
@@ -65,9 +67,9 @@ export default function BookingForm({ slug, barbers, services, showProviderChoic
         />
       </div>
 
-      {services.length === 1 ? (
-        // خدمة واحدة ← تُختار تلقائياً (حجز موحّد بنقرة واحدة)
-        <input type="hidden" name="serviceId" value={services[0].id} />
+      {!showServicePicker ? (
+        // خدمة واحدة أو الاختيار معطّل ← تُستخدم الأولى تلقائياً
+        <input type="hidden" name="serviceId" value={services[0]?.id ?? ""} />
       ) : (
         <div className="flex flex-col gap-2">
           <label className="font-bold text-sm">الخدمة المطلوبة</label>

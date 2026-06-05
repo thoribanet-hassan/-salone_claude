@@ -3,6 +3,7 @@ import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { themeFor } from "@/lib/theme";
 import { joinUrlFor } from "@/lib/url";
+import { serviceDateFor } from "@/lib/queue";
 import ServeView from "../serve/ServeView";
 import QrActions from "../q/[slug]/QrActions";
 import {
@@ -16,7 +17,7 @@ import {
   updateSettingsAction,
 } from "./actions";
 
-export const metadata = { title: "لوحة التحكم | صالون" };
+export const metadata = { title: "لوحة التحكم | دورك" };
 
 export default async function DashboardPage() {
   const session = await getSession();
@@ -45,6 +46,13 @@ export default async function DashboardPage() {
     prisma.ticket.count({ where: { barberId: managerId, status: "waiting" } }),
     prisma.ticket.count({ where: { shopId, barberId: null, status: "waiting" } }),
   ]);
+
+  const today = serviceDateFor(shop.timezone);
+  const skipped = await prisma.ticket.findMany({
+    where: { shopId, status: "skipped", serviceDate: today },
+    orderBy: { completedAt: "desc" },
+    take: 10,
+  });
 
   const theme = themeFor(shop.facilityType);
   const isManual = shop.settings?.countdownMode === "manual";
@@ -87,6 +95,7 @@ export default async function DashboardPage() {
               status={manager.status}
               isManual={isManual}
               waitingCount={waitingAssigned + waitingPool}
+              skipped={skipped.map((t) => ({ id: t.id.toString(), ticketNumber: t.ticketNumber, customerName: t.customerName }))}
               embedded
               current={
                 current
@@ -114,6 +123,7 @@ export default async function DashboardPage() {
           <form action={updateSettingsAction} className="flex flex-col">
             <Toggle name="isOpen" label="استقبال العملاء مفتوح" checked={!!st?.isOpen} />
             <Toggle name="allowProviderChoice" label="السماح باختيار الموظف (وإلا حجز موحّد)" checked={!!st?.allowProviderChoice} />
+            <Toggle name="allowServiceChoice" label="السماح باختيار الخدمة (وإلا الخدمة الافتراضية)" checked={!!st?.allowServiceChoice} />
             <Toggle name="showCountdown" label="عرض العدّاد الحي" checked={!!st?.showCountdown} />
             <Toggle name="showExpectedTime" label="عرض الوقت المتوقع" checked={!!st?.showExpectedTime} />
             <Toggle name="showPeopleAhead" label="عرض عدد من قبله" checked={!!st?.showPeopleAhead} />
@@ -213,7 +223,7 @@ export default async function DashboardPage() {
           </section>
         )}
 
-        <p className="muted text-center text-xs">مدعوم بنظام «صالون»</p>
+        <p className="muted text-center text-xs">مدعوم بنظام «دورك»</p>
       </div>
     </main>
   );

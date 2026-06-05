@@ -29,9 +29,9 @@ export async function createBookingAction(
   });
   if (!shop) return { error: "المحل غير موجود" };
 
-  // قواعد منع الحجز
+  // قواعد منع الحجز (المدير مزوّد خدمة أيضاً)
   const activeBarbers = await prisma.user.findMany({
-    where: { shopId: shop.id, role: "barber", isActive: true },
+    where: { shopId: shop.id, role: { in: ["manager", "barber"] }, isActive: true },
   });
   const availableBarbers = activeBarbers.filter((b) => b.status === "available");
 

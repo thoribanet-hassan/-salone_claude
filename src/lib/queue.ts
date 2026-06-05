@@ -38,10 +38,10 @@ export async function resolveEstDuration(
     return bs?.duration ?? fallback;
   }
 
-  // pool: متوسط أزمنة الحلاقين المتاحين لهذه الخدمة
+  // pool: متوسط أزمنة المزوّدين المتاحين لهذه الخدمة (المدير مزوّد أيضاً)
   const availableIds = (
     await prisma.user.findMany({
-      where: { shopId, role: "barber", status: "available", isActive: true },
+      where: { shopId, role: { in: ["manager", "barber"] }, status: "available", isActive: true },
       select: { id: true },
     })
   ).map((b) => b.id);
@@ -123,7 +123,7 @@ export async function queueInfoFor(ticket: Ticket): Promise<QueueInfo> {
   });
   const sum = ahead.reduce((s, t) => s + t.estDuration, 0);
   const availableCount = await prisma.user.count({
-    where: { shopId: ticket.shopId, role: "barber", status: "available", isActive: true },
+    where: { shopId: ticket.shopId, role: { in: ["manager", "barber"] }, status: "available", isActive: true },
   });
   const parallelism = Math.max(availableCount, 1);
   return { peopleAhead: ahead.length, remainingMinutes: Math.round(sum / parallelism) };
@@ -159,6 +159,34 @@ export async function skipCurrent(barberId: bigint): Promise<boolean> {
     prisma.user.update({ where: { id: barberId }, data: { status: "available" } }),
   ]);
   return true;
+}
+
+// تنظيف الطابور: إلغاء التذاكر المهجورة (TTL) والمعلّقة
+export async function cleanupQueues(): Promise<{ abandoned: number; staleServing: number }> {
+  const now = new Date();
+  const waitingTtl = new Date(now.getTime() - 4 * 60 * 60 * 1000); // 4 ساعات
+  const servingTtl = new Date(now.getTime() - 6 * 60 * 60 * 1000); // 6 ساعات
+
+  const abandoned = await prisma.ticket.updateMany({
+    where: { status: "waiting", createdAt: { lt: waitingTtl } },
+    data: { status: "cancelled", cancelledAt: now },
+  });
+  // خدمة بدأت ولم تُنهَ منذ مدة طويلة → تُغلق ويُحرَّر مزوّدها لاحقاً
+  const staleServing = await prisma.ticket.updateMany({
+    where: { status: "serving", startedAt: { lt: servingTtl } },
+    data: { status: "completed", completedAt: now },
+  });
+  return { abandoned: abandoned.count, staleServing: staleServing.count };
+}
+
+// إعادة عميل متخطّى إلى الطابور (يحتفظ بترتيبه الزمني الأصلي)
+export async function restoreTicket(shopId: bigint, ticketId: bigint): Promise<void> {
+  const t = await prisma.ticket.findFirst({ where: { id: ticketId, shopId, status: "skipped" } });
+  if (!t) return;
+  await prisma.ticket.update({
+    where: { id: ticketId },
+    data: { status: "waiting", barberId: null, startedAt: null, completedAt: null, readyAt: null },
+  });
 }
 
 // تبديل حالة الحلاق (متاح/غير متاح) — لا يُسمح بـ unavailable أثناء الخدمة

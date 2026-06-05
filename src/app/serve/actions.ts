@@ -8,6 +8,7 @@ import {
   skipCurrent,
   setBarberStatus,
   markNextCustomerReady,
+  restoreTicket,
 } from "@/lib/queue";
 
 async function barberId(): Promise<bigint | null> {
@@ -46,4 +47,12 @@ export async function markReadyAction(minutes: number): Promise<void> {
   const s = await getSession();
   if (s) await markNextCustomerReady(BigInt(s.shopId), minutes);
   revalidatePath("/serve");
+}
+
+// إعادة عميل متخطّى إلى الطابور
+export async function restoreAction(ticketId: string): Promise<void> {
+  const s = await getSession();
+  if (s) await restoreTicket(BigInt(s.shopId), BigInt(ticketId));
+  revalidatePath("/serve");
+  revalidatePath("/dashboard");
 }

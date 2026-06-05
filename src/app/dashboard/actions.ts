@@ -120,6 +120,7 @@ export async function updateSettingsAction(formData: FormData) {
     data: {
       isOpen: b("isOpen"),
       allowProviderChoice: b("allowProviderChoice"),
+      allowServiceChoice: b("allowServiceChoice"),
       showExpectedTime: b("showExpectedTime"),
       showPeopleAhead: b("showPeopleAhead"),
       showBarberName: b("showBarberName"),

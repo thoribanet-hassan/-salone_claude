@@ -83,6 +83,8 @@ model ShopSettings {
   // يتحكم المدير: إظهار الموظفين للاختيار منهم (true) أم حجز موحّد بلا اختيار (false)
   // للنوع general يُفرض دائماً false بصرف النظر عن هذه القيمة
   allowProviderChoice Boolean @default(true) @map("allow_provider_choice")
+  // السماح للزبون باختيار الخدمة (وإلا تُستخدم الخدمة الافتراضية بلا سؤال)
+  allowServiceChoice Boolean @default(true) @map("allow_service_choice")
   // وضع العدّاد: تلقائي (افتراضي) أو يدوي يُطلقه المدير
   countdownMode CountdownMode @default(auto) @map("countdown_mode")
 

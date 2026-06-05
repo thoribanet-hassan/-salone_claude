@@ -8,12 +8,19 @@ import {
   skipAction,
   toggleStatusAction,
   markReadyAction,
+  restoreAction,
 } from "./actions";
 
 interface Current {
   ticketNumber: number;
   customerName: string;
   serviceName: string | null;
+}
+
+interface Skipped {
+  id: string;
+  ticketNumber: number;
+  customerName: string;
 }
 
 interface Props {
@@ -25,6 +32,7 @@ interface Props {
   isManual: boolean;
   waitingCount: number;
   current: Current | null;
+  skipped?: Skipped[];
   embedded?: boolean; // داخل لوحة المدير: نخفي الترويسة والخروج
 }
 
@@ -138,6 +146,30 @@ export default function ServeView(props: Props) {
           </div>
         )}
       </div>
+
+      {/* العملاء المتخطّون — مع إمكانية الإعادة */}
+      {props.skipped && props.skipped.length > 0 && (
+        <div className="surface p-4">
+          <p className="font-bold text-sm mb-2">عملاء تم تخطّيهم اليوم</p>
+          <div className="flex flex-col gap-2">
+            {props.skipped.map((t) => (
+              <div key={t.id} className="flex items-center justify-between" style={{ background: "var(--surface-2)", borderRadius: 8, padding: "8px 12px" }}>
+                <span className="text-sm">
+                  <span className="font-bold">#{t.ticketNumber}</span> {t.customerName}
+                </span>
+                <button
+                  disabled={pending}
+                  onClick={() => run(() => restoreAction(t.id))}
+                  className="px-3 py-1 rounded font-bold text-sm"
+                  style={{ background: "var(--accent)", color: "var(--accent-contrast)" }}
+                >
+                  إعادة للطابور
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {!props.embedded && (
         <a href="/api/logout" className="muted text-center text-xs underline mt-2">

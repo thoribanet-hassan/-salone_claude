@@ -6,7 +6,7 @@ export default function Home() {
       <div className="w-full max-w-md flex flex-col gap-6">
         <div>
           <h1 className="text-5xl font-extrabold" style={{ color: "var(--accent)" }}>
-            صالون
+            دورك
           </h1>
           <p className="muted mt-3 text-lg">
             نظام إدارة طوابير محلات الحلاقة والصالونات والطوابير العامة عبر QR

@@ -2,9 +2,10 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { themeFor } from "@/lib/theme";
+import { serviceDateFor } from "@/lib/queue";
 import ServeView from "./ServeView";
 
-export const metadata = { title: "شاشة الموظف | صالون" };
+export const metadata = { title: "شاشة الموظف | دورك" };
 
 export default async function ServePage() {
   const session = await getSession();
@@ -26,6 +27,13 @@ export default async function ServePage() {
 
   if (!barber || !shop) redirect("/login");
 
+  const today = serviceDateFor(shop.timezone);
+  const skipped = await prisma.ticket.findMany({
+    where: { shopId, status: "skipped", serviceDate: today },
+    orderBy: { completedAt: "desc" },
+    take: 10,
+  });
+
   const theme = themeFor(shop.facilityType);
   const isManual = shop.settings?.countdownMode === "manual";
 
@@ -39,6 +47,11 @@ export default async function ServePage() {
         status={barber.status}
         isManual={isManual}
         waitingCount={waitingAssigned + waitingPool}
+        skipped={skipped.map((t) => ({
+          id: t.id.toString(),
+          ticketNumber: t.ticketNumber,
+          customerName: t.customerName,
+        }))}
         current={
           current
             ? {

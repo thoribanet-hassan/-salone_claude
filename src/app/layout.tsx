@@ -9,8 +9,8 @@ const tajawal = Tajawal({
 });
 
 export const metadata: Metadata = {
-  title: "صالون | إدارة الطوابير",
-  description: "نظام «صالون» لإدارة طوابير محلات الحلاقة وصالونات التجميل عبر QR",
+  title: "دورك | إدارة الطوابير",
+  description: "نظام «دورك» لإدارة طوابير محلات الحلاقة وصالونات التجميل والطوابير العامة عبر QR",
 };
 
 export default function RootLayout({
