@@ -44,6 +44,12 @@ export default function BookingForm({ slug, barbers, services, showProviderChoic
   const totalMin = chosen.reduce((sum, s) => sum + s.duration, 0);
   const totalPrice = chosen.reduce((sum, s) => sum + s.price, 0);
   const [whenMode, setWhenMode] = useState<"now" | "scheduled">("now");
+  // منتقي وقت سهل: ساعة (1-12) + دقيقة + قبل/بعد الظهر
+  const [apptH, setApptH] = useState(4);
+  const [apptM, setApptM] = useState("00");
+  const [apptPeriod, setApptPeriod] = useState<"am" | "pm">("pm");
+  const apptH24 = apptPeriod === "am" ? apptH % 12 : (apptH % 12) + 12;
+  const scheduledTime24 = `${String(apptH24).padStart(2, "0")}:${apptM}`;
   const toggle = (id: string) =>
     setSelected((cur) => (cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id]));
   const [state, formAction] = useActionState<BookingState, FormData>(
@@ -172,12 +178,57 @@ export default function BookingForm({ slug, barbers, services, showProviderChoic
           </button>
         </div>
         {whenMode === "scheduled" && (
-          <input
-            type="time"
-            name="scheduledTime"
-            required
-            className="input-field px-4 py-3 text-lg mt-1"
-          />
+          <div className="flex flex-col gap-2 mt-1">
+            {/* قبل / بعد الظهر */}
+            <div className="grid grid-cols-2 gap-2">
+              {([["am", "قبل الظهر ☀️"], ["pm", "بعد الظهر 🌙"]] as const).map(([v, label]) => (
+                <button
+                  key={v}
+                  type="button"
+                  onClick={() => setApptPeriod(v)}
+                  className="py-3 rounded-xl border-2 font-bold"
+                  style={{
+                    borderColor: apptPeriod === v ? "var(--accent)" : "var(--border)",
+                    background: apptPeriod === v ? "var(--surface-2)" : "transparent",
+                  }}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            {/* الساعة : الدقيقة */}
+            <div className="flex items-center gap-2">
+              <div className="flex-1 flex flex-col gap-1">
+                <span className="muted text-xs">الساعة</span>
+                <select
+                  value={apptH}
+                  onChange={(e) => setApptH(parseInt(e.target.value, 10))}
+                  className="input-field px-3 py-3 text-lg text-center"
+                >
+                  {Array.from({ length: 12 }, (_, i) => i + 1).map((h) => (
+                    <option key={h} value={h}>{h}</option>
+                  ))}
+                </select>
+              </div>
+              <span className="text-2xl font-extrabold mt-4">:</span>
+              <div className="flex-1 flex flex-col gap-1">
+                <span className="muted text-xs">الدقيقة</span>
+                <select
+                  value={apptM}
+                  onChange={(e) => setApptM(e.target.value)}
+                  className="input-field px-3 py-3 text-lg text-center"
+                >
+                  {["00", "15", "30", "45"].map((m) => (
+                    <option key={m} value={m}>{m}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <p className="text-sm font-bold text-center" style={{ color: "var(--accent)" }}>
+              موعدك: {apptH}:{apptM} {apptPeriod === "am" ? "قبل الظهر" : "بعد الظهر"}
+            </p>
+            <input type="hidden" name="scheduledTime" value={scheduledTime24} />
+          </div>
         )}
       </div>
 
