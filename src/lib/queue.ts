@@ -70,6 +70,7 @@ export async function createTicket(input: CreateTicketInput): Promise<Ticket> {
   }
   if (estDuration <= 0) estDuration = 20;
   const serviceLabel = services.map((s) => s.name).join(" + ") || null;
+  const totalPrice = services.reduce((sum, s) => sum + (s.price ?? 0), 0);
 
   return prisma.$transaction(async (tx) => {
     const rows = await tx.$queryRaw<{ last_number: number }[]>(Prisma.sql`
@@ -92,6 +93,7 @@ export async function createTicket(input: CreateTicketInput): Promise<Ticket> {
         serviceDate,
         ticketNumber,
         estDuration,
+        totalPrice,
         status: "waiting",
       },
     });

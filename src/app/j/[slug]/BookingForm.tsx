@@ -13,6 +13,7 @@ interface ServiceOption {
   id: string;
   name: string;
   duration: number;
+  price: number;
 }
 
 interface Props {
@@ -21,6 +22,7 @@ interface Props {
   services: ServiceOption[];
   showProviderChoice: boolean;
   allowServiceChoice: boolean;
+  showPrices: boolean;
 }
 
 function SubmitButton() {
@@ -32,15 +34,15 @@ function SubmitButton() {
   );
 }
 
-export default function BookingForm({ slug, barbers, services, showProviderChoice, allowServiceChoice }: Props) {
+export default function BookingForm({ slug, barbers, services, showProviderChoice, allowServiceChoice, showPrices }: Props) {
   // تظهر كل الخدمات النشطة للاختيار (حتى لو واحدة). تُخفى فقط إن عطّل المدير اختيار الخدمة.
   const showServicePicker = allowServiceChoice && services.length >= 1;
   const [selected, setSelected] = useState<string[]>(
     services.length === 1 ? services.map((s) => s.id) : []
   );
-  const totalMin = services
-    .filter((s) => selected.includes(s.id))
-    .reduce((sum, s) => sum + s.duration, 0);
+  const chosen = services.filter((s) => selected.includes(s.id));
+  const totalMin = chosen.reduce((sum, s) => sum + s.duration, 0);
+  const totalPrice = chosen.reduce((sum, s) => sum + s.price, 0);
   const toggle = (id: string) =>
     setSelected((cur) => (cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id]));
   const [state, formAction] = useActionState<BookingState, FormData>(
@@ -107,14 +109,20 @@ export default function BookingForm({ slug, barbers, services, showProviderChoic
                     />
                     <span className="font-bold">{s.name}</span>
                   </span>
-                  <span className="muted text-sm">~{s.duration} د</span>
+                  <span className="muted text-sm">
+                    ~{s.duration} د
+                    {showPrices && s.price > 0 && (
+                      <span style={{ color: "var(--accent)" }}> · {s.price} ريال</span>
+                    )}
+                  </span>
                 </label>
               );
             })}
           </div>
           {totalMin > 0 && (
             <p className="text-sm font-bold" style={{ color: "var(--accent)" }}>
-              المدة الإجمالية التقريبية: ~{totalMin} دقيقة
+              الإجمالي التقريبي: ~{totalMin} دقيقة
+              {showPrices && totalPrice > 0 && ` · ${totalPrice} ريال`}
             </p>
           )}
         </div>

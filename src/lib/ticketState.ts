@@ -15,6 +15,8 @@ export interface TicketState {
   countdownActive: boolean; // هل العدّاد فعّال؟ (في الوضع اليدوي لا يبدأ إلا بإطلاق المدير)
   readyAtMs: number | null; // وقت الجاهزية الذي حدّده الموظف (لكشف التغيّر وتشغيل النغمة)
   serviceName: string | null;
+  totalPrice: number;
+  showPrices: boolean;
   barberName: string | null;
   // رسالة الحالة الجاهزة للعرض
   headline: string;
@@ -101,6 +103,8 @@ export async function getTicketState(token: string): Promise<TicketState | null>
     countdownActive,
     readyAtMs: ticket.readyAt ? ticket.readyAt.getTime() : null,
     serviceName: ticket.serviceLabel ?? ticket.service?.name ?? null,
+    totalPrice: ticket.totalPrice,
+    showPrices: !!ticket.shop.settings?.showPrices,
     barberName: ticket.barber?.name ?? null,
     headline,
     settings: {

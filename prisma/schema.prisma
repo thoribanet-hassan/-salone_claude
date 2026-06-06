@@ -85,6 +85,8 @@ model ShopSettings {
   allowProviderChoice Boolean @default(true) @map("allow_provider_choice")
   // السماح للزبون باختيار الخدمة (وإلا تُستخدم الخدمة الافتراضية بلا سؤال)
   allowServiceChoice Boolean @default(true) @map("allow_service_choice")
+  // عرض أسعار الخدمات للزبون
+  showPrices Boolean @default(true) @map("show_prices")
   // وضع العدّاد: تلقائي (افتراضي) أو يدوي يُطلقه المدير
   countdownMode CountdownMode @default(auto) @map("countdown_mode")
 
@@ -129,6 +131,7 @@ model Ticket {
   serviceDate  DateTime     @map("service_date") @db.Date
   ticketNumber Int          @map("ticket_number")
   estDuration  Int          @default(20) @map("est_duration")
+  totalPrice   Int          @default(0) @map("total_price") // مجموع أسعار الخدمات وقت الحجز
   status       TicketStatus @default(waiting)
   position     Int?
   readyAt      DateTime?    @map("ready_at") // وقت الجاهزية الذي يحدّده المدير (الوضع اليدوي)
@@ -166,6 +169,7 @@ model Service {
   shopId          BigInt   @map("shop_id")
   name            String
   defaultDuration Int      @default(20) @map("default_duration")
+  price           Int      @default(0) // سعر الخدمة (ريال) — 0 = غير محدّد
   isActive        Boolean  @default(true) @map("is_active")
   position        Int      @default(0)
   createdAt       DateTime @default(now()) @map("created_at")

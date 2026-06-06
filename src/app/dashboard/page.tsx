@@ -14,6 +14,7 @@ import {
   deleteBarberAction,
   addServiceAction,
   deleteServiceAction,
+  setPriceAction,
   setDurationAction,
   updateSettingsAction,
 } from "./actions";
@@ -130,6 +131,7 @@ export default async function DashboardPage() {
             <Toggle name="isOpen" label="استقبال العملاء مفتوح" checked={!!st?.isOpen} />
             <Toggle name="allowProviderChoice" label="السماح باختيار الموظف (وإلا حجز موحّد)" checked={!!st?.allowProviderChoice} />
             <Toggle name="allowServiceChoice" label="السماح باختيار الخدمة (وإلا الخدمة الافتراضية)" checked={!!st?.allowServiceChoice} />
+            <Toggle name="showPrices" label="عرض أسعار الخدمات للزبون" checked={!!st?.showPrices} />
             <Toggle name="showCountdown" label="عرض العدّاد الحي" checked={!!st?.showCountdown} />
             <Toggle name="showExpectedTime" label="عرض الوقت المتوقع" checked={!!st?.showExpectedTime} />
             <Toggle name="showPeopleAhead" label="عرض عدد من قبله" checked={!!st?.showPeopleAhead} />
@@ -207,21 +209,34 @@ export default async function DashboardPage() {
           <h2 className="font-extrabold mb-3">الخدمات</h2>
           <div className="flex flex-col gap-2 mb-4">
             {shop.services.map((s) => (
-              <div key={s.id.toString()} className="flex items-center justify-between surface p-2" style={{ background: "var(--surface-2)" }}>
-                <span className="font-bold">{s.name} <span className="muted text-xs">({s.defaultDuration}د)</span></span>
-                <form action={deleteServiceAction}>
+              <div key={s.id.toString()} className="surface p-2" style={{ background: "var(--surface-2)" }}>
+                <div className="flex items-center justify-between">
+                  <span className="font-bold">{s.name} <span className="muted text-xs">({s.defaultDuration}د)</span></span>
+                  <form action={deleteServiceAction}>
+                    <input type="hidden" name="serviceId" value={s.id.toString()} />
+                    <button className="text-red-400 text-xs px-2">حذف</button>
+                  </form>
+                </div>
+                {/* تعديل السعر */}
+                <form action={setPriceAction} className="flex items-center gap-2 mt-2">
                   <input type="hidden" name="serviceId" value={s.id.toString()} />
-                  <button className="text-red-400 text-xs px-2">حذف</button>
+                  <span className="muted text-xs">السعر:</span>
+                  <input name="price" type="number" min={0} defaultValue={s.price} className="input-field px-2 py-1 w-24 text-sm" />
+                  <span className="muted text-xs">ريال</span>
+                  <button className="px-2 py-1 rounded surface text-xs font-bold">حفظ السعر</button>
                 </form>
               </div>
             ))}
           </div>
-          <form action={addServiceAction} className="flex gap-2">
-            <input name="name" required placeholder="اسم أي خدمة تريدها" className="input-field px-3 py-2 flex-1" />
-            <input name="defaultDuration" type="number" defaultValue={20} className="input-field px-3 py-2 w-20" />
-            <button className="btn-accent px-3 font-bold">+</button>
+          <form action={addServiceAction} className="flex flex-col gap-2">
+            <input name="name" required placeholder="اسم أي خدمة تريدها" className="input-field px-3 py-2" />
+            <div className="flex gap-2">
+              <input name="defaultDuration" type="number" defaultValue={20} placeholder="دقيقة" className="input-field px-3 py-2 flex-1" />
+              <input name="price" type="number" min={0} defaultValue={0} placeholder="السعر (ريال)" className="input-field px-3 py-2 flex-1" />
+              <button className="btn-accent px-4 font-bold">+</button>
+            </div>
           </form>
-          <p className="muted text-xs mt-2">اكتب أي اسم خدمة تريده — غير مقيّد بأنواع جاهزة.</p>
+          <p className="muted text-xs mt-2">اكتب أي اسم خدمة تريده، وحدّد مدّتها وسعرها.</p>
         </section>
 
         {/* مصفوفة الأزمنة */}

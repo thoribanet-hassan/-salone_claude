@@ -22,6 +22,8 @@ interface State {
   countdownActive: boolean;
   readyAtMs: number | null;
   serviceName: string | null;
+  totalPrice: number;
+  showPrices: boolean;
   barberName: string | null;
   headline: string;
   settings: {
@@ -240,6 +242,11 @@ export default function TicketView({
         </p>
         <p className="font-bold mt-1">{s.customerName}</p>
         {s.serviceName && <p className="muted text-sm">{s.serviceName}</p>}
+        {s.showPrices && s.totalPrice > 0 && (
+          <p className="font-bold mt-1">
+            التكلفة: <span style={{ color: "var(--accent)" }}>{s.totalPrice} ريال</span>
+          </p>
+        )}
       </div>
 
       {/* العدّاد التنازلي الحي — العنصر المحوري */}

@@ -89,10 +89,12 @@ export default async function JoinPage({
                   name: b.name,
                 }))}
                 allowServiceChoice={!!shop.settings?.allowServiceChoice}
+                showPrices={!!shop.settings?.showPrices}
                 services={shop.services.map((s) => ({
                   id: s.id.toString(),
                   name: s.name,
                   duration: s.defaultDuration,
+                  price: s.price,
                 }))}
               />
             </>

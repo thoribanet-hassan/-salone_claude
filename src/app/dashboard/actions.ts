@@ -86,10 +86,11 @@ export async function addServiceAction(formData: FormData) {
   const { shopId } = await requireManager();
   const name = String(formData.get("name") ?? "").trim();
   const dur = parseInt(String(formData.get("defaultDuration") ?? "20"), 10) || 20;
+  const price = Math.max(0, parseInt(String(formData.get("price") ?? "0"), 10) || 0);
   if (!name) return;
   const count = await prisma.service.count({ where: { shopId } });
   const service = await prisma.service.create({
-    data: { shopId, name, defaultDuration: dur, position: count + 1 },
+    data: { shopId, name, defaultDuration: dur, price, position: count + 1 },
   });
   const barbers = await prisma.user.findMany({ where: { shopId, role: "barber" } });
   if (barbers.length) {
@@ -105,6 +106,15 @@ export async function deleteServiceAction(formData: FormData) {
   const serviceId = BigInt(String(formData.get("serviceId")));
   await prisma.service.delete({ where: { id: serviceId } });
   revalidatePath("/dashboard");
+}
+
+export async function setPriceAction(formData: FormData) {
+  await requireManager();
+  const serviceId = BigInt(String(formData.get("serviceId")));
+  const price = Math.max(0, parseInt(String(formData.get("price") ?? "0"), 10) || 0);
+  await prisma.service.update({ where: { id: serviceId }, data: { price } });
+  revalidatePath("/dashboard");
+  revalidatePath("/j/[slug]", "page");
 }
 
 export async function setDurationAction(formData: FormData) {
@@ -131,6 +141,7 @@ export async function updateSettingsAction(formData: FormData) {
       isOpen: b("isOpen"),
       allowProviderChoice: b("allowProviderChoice"),
       allowServiceChoice: b("allowServiceChoice"),
+      showPrices: b("showPrices"),
       showExpectedTime: b("showExpectedTime"),
       showPeopleAhead: b("showPeopleAhead"),
       showBarberName: b("showBarberName"),
