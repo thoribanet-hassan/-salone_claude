@@ -13,6 +13,7 @@ export interface TicketState {
   remainingMinutes: number; // للعرض النصي
   remainingSeconds: number; // بذرة العدّاد التنازلي الحي
   countdownActive: boolean; // هل العدّاد فعّال؟ (في الوضع اليدوي لا يبدأ إلا بإطلاق المدير)
+  readyAtMs: number | null; // وقت الجاهزية الذي حدّده الموظف (لكشف التغيّر وتشغيل النغمة)
   serviceName: string | null;
   barberName: string | null;
   // رسالة الحالة الجاهزة للعرض
@@ -46,17 +47,16 @@ export async function getTicketState(token: string): Promise<TicketState | null>
   let remainingSeconds = autoMinutes * 60;
   let countdownActive = false;
   if (ticket.status === "waiting") {
-    if (isManual) {
-      // يدوي: لا عدّاد إلا إذا أطلقه المدير (readyAt)
-      if (ticket.readyAt) {
-        const secs = Math.max(0, Math.floor((ticket.readyAt.getTime() - Date.now()) / 1000));
-        remainingSeconds = secs;
-        remainingMinutes = Math.ceil(secs / 60);
-        countdownActive = true;
-      } else {
-        remainingMinutes = 0;
-        remainingSeconds = 0;
-      }
+    if (ticket.readyAt) {
+      // الموظف/المدير حدّد وقت الجاهزية (إنهاء مبكر) → يتقدّم على التقدير التلقائي في كل الأوضاع
+      const secs = Math.max(0, Math.floor((ticket.readyAt.getTime() - Date.now()) / 1000));
+      remainingSeconds = secs;
+      remainingMinutes = Math.ceil(secs / 60);
+      countdownActive = true;
+    } else if (isManual) {
+      // يدوي بلا تحديد بعد
+      remainingMinutes = 0;
+      remainingSeconds = 0;
     } else {
       countdownActive = true; // تلقائي
     }
@@ -99,6 +99,7 @@ export async function getTicketState(token: string): Promise<TicketState | null>
     remainingMinutes,
     remainingSeconds,
     countdownActive,
+    readyAtMs: ticket.readyAt ? ticket.readyAt.getTime() : null,
     serviceName: ticket.serviceLabel ?? ticket.service?.name ?? null,
     barberName: ticket.barber?.name ?? null,
     headline,

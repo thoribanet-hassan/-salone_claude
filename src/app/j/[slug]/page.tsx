@@ -4,6 +4,9 @@ import { prisma } from "@/lib/db";
 import { themeFor, allowsProviderChoice } from "@/lib/theme";
 import BookingForm from "./BookingForm";
 
+// لا تخزين مؤقت — تظهر الخدمات/الحالة المحدّثة فوراً للزبون
+export const dynamic = "force-dynamic";
+
 export default async function JoinPage({
   params,
 }: {

@@ -33,8 +33,11 @@ function SubmitButton() {
 }
 
 export default function BookingForm({ slug, barbers, services, showProviderChoice, allowServiceChoice }: Props) {
-  const showServicePicker = allowServiceChoice && services.length > 1;
-  const [selected, setSelected] = useState<string[]>([]);
+  // تظهر كل الخدمات النشطة للاختيار (حتى لو واحدة). تُخفى فقط إن عطّل المدير اختيار الخدمة.
+  const showServicePicker = allowServiceChoice && services.length >= 1;
+  const [selected, setSelected] = useState<string[]>(
+    services.length === 1 ? services.map((s) => s.id) : []
+  );
   const totalMin = services
     .filter((s) => selected.includes(s.id))
     .reduce((sum, s) => sum + s.duration, 0);

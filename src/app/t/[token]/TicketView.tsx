@@ -6,6 +6,7 @@ import {
   reminderPatternFor,
   playTurnChime,
   playCountdownStartAlert,
+  playReadyUpdateChime,
 } from "@/lib/sound";
 
 const REMINDER_MS = 5 * 60 * 1000; // تنبيه كل 5 دقائق
@@ -19,6 +20,7 @@ interface State {
   remainingMinutes: number;
   remainingSeconds: number;
   countdownActive: boolean;
+  readyAtMs: number | null;
   serviceName: string | null;
   barberName: string | null;
   headline: string;
@@ -57,6 +59,7 @@ export default function TicketView({
   const liveRef = useRef({ remainingMinutes: initial.remainingMinutes, peopleAhead: initial.peopleAhead });
   const prevStatusRef = useRef(initial.status);
   const prevCountdownActiveRef = useRef(initial.countdownActive);
+  const prevReadyAtMsRef = useRef(initial.readyAtMs);
   liveRef.current = { remainingMinutes: state.remainingMinutes, peopleAhead: state.peopleAhead };
 
   // العدّاد يُثبّت على لحظة هدف ليتناقص بسلاسة، ويُعاد ضبطه فقط حين تتغيّر تقدير الخادم
@@ -145,13 +148,15 @@ export default function TicketView({
     prevStatusRef.current = state.status;
   }, [state.status, soundOn]);
 
-  // تنبيه واضح لحظة انطلاق العدّاد (الوضع اليدوي: يطلقه المدير) + اهتزاز
+  // تنبيه قوي عند بدء العدّاد اليدوي لأول مرة (مطعم: لم يكن هناك وقت سابق)
   useEffect(() => {
-    const justStarted =
+    const firstActivation =
       !prevCountdownActiveRef.current &&
       state.countdownActive &&
-      state.status === "waiting";
-    if (justStarted) {
+      state.status === "waiting" &&
+      prevReadyAtMsRef.current == null &&
+      state.readyAtMs == null; // عدّاد تلقائي بدأ، لا تحديد يدوي
+    if (firstActivation) {
       if (soundOn && ctxRef.current) playCountdownStartAlert(ctxRef.current);
       if (typeof navigator !== "undefined" && "vibrate" in navigator) {
         navigator.vibrate?.([200, 100, 200, 100, 300]);
@@ -159,6 +164,21 @@ export default function TicketView({
     }
     prevCountdownActiveRef.current = state.countdownActive;
   }, [state.countdownActive, state.status, soundOn]);
+
+  // 🆕 نغمة فريدة عندما يحدّد/يقلّص الموظف وقت الجاهزية (إنهاء مبكر) — في كل الأوضاع
+  useEffect(() => {
+    const readyChanged =
+      state.readyAtMs != null &&
+      state.readyAtMs !== prevReadyAtMsRef.current &&
+      state.status === "waiting";
+    if (readyChanged) {
+      if (soundOn && ctxRef.current) playReadyUpdateChime(ctxRef.current);
+      if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+        navigator.vibrate?.([120, 80, 120]);
+      }
+    }
+    prevReadyAtMsRef.current = state.readyAtMs;
+  }, [state.readyAtMs, state.status, soundOn]);
 
   // إعادة مزامنة فورية عند عودة الاتصال أو عودة التبويب للواجهة
   useEffect(() => {

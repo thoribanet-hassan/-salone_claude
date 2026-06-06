@@ -127,10 +127,14 @@ export default function ServeView(props: Props) {
           </button>
         )}
 
-        {/* الوضع اليدوي (مطعم): مربع منزلق يحدّد الموظف به الوقت (1–60 دقيقة) */}
-        {props.isManual && (
+        {/* تحديد/تقليص وقت جاهزية العميل التالي (إنهاء مبكر) — في كل الأوضاع عند وجود منتظر */}
+        {props.waitingCount > 0 && (
           <div className="surface p-4 mt-1">
-            <p className="font-bold text-sm mb-3">طاولة ستفرغ قريباً؟ حدّد الوقت ونبّه العميل التالي:</p>
+            <p className="font-bold text-sm mb-3">
+              {props.isManual
+                ? "طاولة ستفرغ قريباً؟ حدّد الوقت ونبّه العميل التالي:"
+                : "أوشكت على الإنهاء؟ قلّص وقت العميل التالي (تصله نغمة):"}
+            </p>
             <div className="flex items-center justify-between mb-2">
               <span className="muted text-sm">الوقت</span>
               <span className="text-2xl font-extrabold" style={{ color: "var(--accent)" }}>

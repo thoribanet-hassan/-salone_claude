@@ -64,6 +64,26 @@ export function playCountdownStartAlert(ctx: AudioContext): void {
   }
 }
 
+// نغمة فريدة عند تحديث الموظف لوقت الجاهزية (إنهاء مبكر) — مميّزة عن باقي النغمات
+export function playReadyUpdateChime(ctx: AudioContext): void {
+  // ثنائية نازلة-صاعدة سريعة بنغمة sawtooth (مميّزة)
+  const notes = [1320, 990, 1320, 1650];
+  let t = ctx.currentTime;
+  for (const freq of notes) {
+    const osc = ctx.createOscillator();
+    const g = ctx.createGain();
+    osc.type = "sawtooth";
+    osc.frequency.value = freq;
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.3, t + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.16);
+    osc.connect(g).connect(ctx.destination);
+    osc.start(t);
+    osc.stop(t + 0.18);
+    t += 0.14;
+  }
+}
+
 // نغمة "حان دورك" — لحن صاعد مميّز يُشغَّل مرة واحدة عند بدء الخدمة
 export function playTurnChime(ctx: AudioContext): void {
   const notes = [660, 880, 1175]; // لحن صاعد
