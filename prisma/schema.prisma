@@ -134,6 +134,7 @@ model Ticket {
   totalPrice   Int          @default(0) @map("total_price") // مجموع أسعار الخدمات وقت الحجز
   status       TicketStatus @default(waiting)
   position     Int?
+  scheduledAt  DateTime?    @map("scheduled_at") // موعد محدّد اختاره الزبون (null = دخول الآن)
   readyAt      DateTime?    @map("ready_at") // وقت الجاهزية الذي يحدّده المدير (الوضع اليدوي)
   createdAt    DateTime     @default(now()) @map("created_at")
   startedAt    DateTime?    @map("started_at")

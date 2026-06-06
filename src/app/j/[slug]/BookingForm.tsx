@@ -43,6 +43,7 @@ export default function BookingForm({ slug, barbers, services, showProviderChoic
   const chosen = services.filter((s) => selected.includes(s.id));
   const totalMin = chosen.reduce((sum, s) => sum + s.duration, 0);
   const totalPrice = chosen.reduce((sum, s) => sum + s.price, 0);
+  const [whenMode, setWhenMode] = useState<"now" | "scheduled">("now");
   const toggle = (id: string) =>
     setSelected((cur) => (cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id]));
   const [state, formAction] = useActionState<BookingState, FormData>(
@@ -141,6 +142,44 @@ export default function BookingForm({ slug, barbers, services, showProviderChoic
           </select>
         </div>
       )}
+
+      {/* وقت الحضور: الآن أو موعد محدّد */}
+      <div className="flex flex-col gap-2">
+        <label className="font-bold text-sm">وقت حضورك</label>
+        <input type="hidden" name="whenMode" value={whenMode} />
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            onClick={() => setWhenMode("now")}
+            className="py-3 rounded-xl border-2 font-bold"
+            style={{
+              borderColor: whenMode === "now" ? "var(--accent)" : "var(--border)",
+              background: whenMode === "now" ? "var(--surface-2)" : "transparent",
+            }}
+          >
+            الآن مباشرة
+          </button>
+          <button
+            type="button"
+            onClick={() => setWhenMode("scheduled")}
+            className="py-3 rounded-xl border-2 font-bold"
+            style={{
+              borderColor: whenMode === "scheduled" ? "var(--accent)" : "var(--border)",
+              background: whenMode === "scheduled" ? "var(--surface-2)" : "transparent",
+            }}
+          >
+            موعد محدّد
+          </button>
+        </div>
+        {whenMode === "scheduled" && (
+          <input
+            type="time"
+            name="scheduledTime"
+            required
+            className="input-field px-4 py-3 text-lg mt-1"
+          />
+        )}
+      </div>
 
       {state.error && (
         <p className="text-red-400 text-sm font-bold text-center">{state.error}</p>

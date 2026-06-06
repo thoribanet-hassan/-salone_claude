@@ -24,6 +24,7 @@ interface State {
   serviceName: string | null;
   totalPrice: number;
   showPrices: boolean;
+  appointmentLabel: string | null;
   barberName: string | null;
   headline: string;
   settings: {
@@ -242,6 +243,11 @@ export default function TicketView({
         </p>
         <p className="font-bold mt-1">{s.customerName}</p>
         {s.serviceName && <p className="muted text-sm">{s.serviceName}</p>}
+        {s.appointmentLabel && (
+          <p className="font-bold mt-1" style={{ color: "var(--accent)" }}>
+            🗓️ موعدك: {s.appointmentLabel}
+          </p>
+        )}
         {s.showPrices && s.totalPrice > 0 && (
           <p className="font-bold mt-1">
             التكلفة: <span style={{ color: "var(--accent)" }}>{s.totalPrice} ريال</span>

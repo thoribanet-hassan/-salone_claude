@@ -17,6 +17,7 @@ export interface TicketState {
   serviceName: string | null;
   totalPrice: number;
   showPrices: boolean;
+  appointmentLabel: string | null;
   barberName: string | null;
   // رسالة الحالة الجاهزة للعرض
   headline: string;
@@ -44,25 +45,45 @@ export async function getTicketState(token: string): Promise<TicketState | null>
   const { peopleAhead, remainingMinutes: autoMinutes } = await queueInfoFor(ticket);
   const isManual = ticket.shop.settings?.countdownMode === "manual";
 
-  // حساب العدّاد حسب الوضع
+  // موعد محدّد لم يحن بعد؟
+  const scheduledFuture =
+    ticket.scheduledAt && ticket.scheduledAt.getTime() > Date.now()
+      ? ticket.scheduledAt
+      : null;
+
+  // حساب العدّاد حسب الأولوية: تحديد الموظف > الموعد المحدّد > التلقائي/اليدوي
   let remainingMinutes = autoMinutes;
   let remainingSeconds = autoMinutes * 60;
   let countdownActive = false;
   if (ticket.status === "waiting") {
     if (ticket.readyAt) {
-      // الموظف/المدير حدّد وقت الجاهزية (إنهاء مبكر) → يتقدّم على التقدير التلقائي في كل الأوضاع
       const secs = Math.max(0, Math.floor((ticket.readyAt.getTime() - Date.now()) / 1000));
       remainingSeconds = secs;
       remainingMinutes = Math.ceil(secs / 60);
       countdownActive = true;
+    } else if (scheduledFuture) {
+      // العدّ التنازلي حتى الموعد المحدّد
+      const secs = Math.max(0, Math.floor((scheduledFuture.getTime() - Date.now()) / 1000));
+      remainingSeconds = secs;
+      remainingMinutes = Math.ceil(secs / 60);
+      countdownActive = true;
     } else if (isManual) {
-      // يدوي بلا تحديد بعد
       remainingMinutes = 0;
       remainingSeconds = 0;
     } else {
       countdownActive = true; // تلقائي
     }
   }
+
+  // نص الموعد للعرض (بتوقيت المحل)
+  const appointmentLabel = ticket.scheduledAt
+    ? new Intl.DateTimeFormat("ar", {
+        timeZone: ticket.shop.timezone,
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
+      }).format(ticket.scheduledAt)
+    : null;
 
   let headline: string;
   switch (ticket.status) {
@@ -79,7 +100,9 @@ export async function getTicketState(token: string): Promise<TicketState | null>
       headline = "تم إلغاء هذه التذكرة";
       break;
     default:
-      if (isManual && !ticket.readyAt) {
+      if (scheduledFuture && !ticket.readyAt) {
+        headline = `موعدك المحجوز الساعة ${appointmentLabel}`;
+      } else if (isManual && !ticket.readyAt) {
         headline = "أنت في الطابور، سيُحدّد وقتك قريباً";
       } else {
         headline =
@@ -105,6 +128,7 @@ export async function getTicketState(token: string): Promise<TicketState | null>
     serviceName: ticket.serviceLabel ?? ticket.service?.name ?? null,
     totalPrice: ticket.totalPrice,
     showPrices: !!ticket.shop.settings?.showPrices,
+    appointmentLabel,
     barberName: ticket.barber?.name ?? null,
     headline,
     settings: {

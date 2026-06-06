@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/db";
-import { createTicket } from "@/lib/queue";
+import { createTicket, scheduledAtFromLocal } from "@/lib/queue";
 
 export interface BookingState {
   error?: string;
@@ -18,6 +18,8 @@ export async function createBookingAction(
   const customerName = String(formData.get("customerName") ?? "").trim();
   const phoneRaw = String(formData.get("customerPhone") ?? "").trim();
   const barberRaw = String(formData.get("barberId") ?? ""); // "" = أول حلاق متاح
+  const whenMode = String(formData.get("whenMode") ?? "now"); // now | scheduled
+  const scheduledTime = String(formData.get("scheduledTime") ?? "").trim(); // HH:MM
   // قد تُختار خدمة واحدة أو أكثر
   const serviceRawList = formData.getAll("serviceIds").map((v) => String(v)).filter(Boolean);
 
@@ -54,6 +56,16 @@ export async function createBookingAction(
     barberId = chosen.id;
   }
 
+  // موعد محدّد (إن اختاره الزبون) — يجب أن يكون في المستقبل اليوم
+  let scheduledAt: Date | null = null;
+  if (whenMode === "scheduled") {
+    if (!scheduledTime) return { error: "يرجى اختيار وقت الموعد" };
+    scheduledAt = scheduledAtFromLocal(shop.timezone, scheduledTime);
+    if (!scheduledAt) return { error: "صيغة الوقت غير صحيحة" };
+    if (scheduledAt.getTime() <= Date.now() + 60_000)
+      return { error: "اختر وقتاً قادماً (ليس وقتاً مضى)" };
+  }
+
   const ticket = await createTicket({
     shopId: shop.id,
     barberId,
@@ -61,6 +73,7 @@ export async function createBookingAction(
     customerName,
     customerPhone: phoneRaw || null,
     timezone: shop.timezone,
+    scheduledAt,
   });
 
   // ربط التذكرة بالجهاز لاستعادتها لاحقاً

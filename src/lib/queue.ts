@@ -12,6 +12,39 @@ export function serviceDateFor(timezone: string): Date {
   return new Date(`${ymd}T00:00:00.000Z`);
 }
 
+// يحوّل وقتاً محلياً اليوم ("HH:MM" بتوقيت المحل) إلى لحظة UTC دقيقة
+export function scheduledAtFromLocal(timezone: string, hhmm: string): Date | null {
+  const m = /^(\d{1,2}):(\d{2})$/.exec(hhmm.trim());
+  if (!m) return null;
+  const hh = Number(m[1]);
+  const mm = Number(m[2]);
+  if (hh > 23 || mm > 59) return null;
+  const now = new Date();
+  const ymd = new Intl.DateTimeFormat("en-CA", {
+    timeZone: timezone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(now);
+  // إيجاد إزاحة المنطقة الزمنية الحالية
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: timezone,
+    hourCycle: "h23",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  })
+    .formatToParts(now)
+    .reduce<Record<string, string>>((a, p) => ((a[p.type] = p.value), a), {});
+  const localAsUTC = Date.UTC(+parts.year, +parts.month - 1, +parts.day, +parts.hour, +parts.minute);
+  const offsetMs = localAsUTC - now.getTime(); // إزاحة المنطقة عن UTC
+  const [Y, M, D] = ymd.split("-").map(Number);
+  const desiredLocalAsUTC = Date.UTC(Y, M - 1, D, hh, mm);
+  return new Date(desiredLocalAsUTC - offsetMs);
+}
+
 export interface CreateTicketInput {
   shopId: bigint;
   barberId: bigint | null; // null = pool "أول حلاق متاح"
@@ -19,6 +52,7 @@ export interface CreateTicketInput {
   customerName: string;
   customerPhone?: string | null;
   timezone: string;
+  scheduledAt?: Date | null; // موعد محدّد (null = الآن)
 }
 
 // يحسب مدة الخدمة المختارة بالدقائق وقت الحجز (لقطة est_duration)
@@ -94,6 +128,7 @@ export async function createTicket(input: CreateTicketInput): Promise<Ticket> {
         ticketNumber,
         estDuration,
         totalPrice,
+        scheduledAt: input.scheduledAt ?? null,
         status: "waiting",
       },
     });
@@ -105,33 +140,28 @@ export interface QueueInfo {
   remainingMinutes: number; // الوقت المتبقي لدور الزبون (مجموع مدد من قبله)
 }
 
-// حساب "عدد الأشخاص قبلك" والوقت المتبقي — بمدد الخدمات الحقيقية (est_duration)
+// حساب "عدد الأشخاص قبلك" والوقت المتبقي — الترتيب حسب وقت الموعد (scheduledAt) وإلا وقت الحجز
 export async function queueInfoFor(ticket: Ticket): Promise<QueueInfo> {
   if (ticket.status !== "waiting") return { peopleAhead: 0, remainingMinutes: 0 };
 
-  const sharedWhere = {
-    shopId: ticket.shopId,
-    status: "waiting" as const,
-    createdAt: { lt: ticket.createdAt },
-  };
+  // الوقت الفعّال لترتيب الطابور = الموعد المحدّد أو وقت الإنشاء
+  const myEff = (ticket.scheduledAt ?? ticket.createdAt).getTime();
 
-  if (ticket.barberId !== null) {
-    // حالة: حلاق محدد ← مجموع مدد من قبله على نفس الحلاق
-    const ahead = await prisma.ticket.findMany({
-      where: { ...sharedWhere, barberId: ticket.barberId },
-      select: { estDuration: true },
-    });
-    const remaining = ahead.reduce((s, t) => s + t.estDuration, 0);
-    return { peopleAhead: ahead.length, remainingMinutes: remaining };
-  }
-
-  // حالة: pool مشترك ← مجموع مدد من قبله (بلا قسمة — أوضح وأأمن للزبون)
-  const ahead = await prisma.ticket.findMany({
-    where: { ...sharedWhere, barberId: null },
-    select: { estDuration: true },
+  // نجلب التذاكر المنتظرة لنفس المسار (حلاق محدد أو pool) ونحسب الترتيب في JS (يتفادى التباس المناطق الزمنية)
+  const candidates = await prisma.ticket.findMany({
+    where: {
+      shopId: ticket.shopId,
+      status: "waiting",
+      barberId: ticket.barberId, // null يطابق pool المشترك تلقائياً
+    },
+    select: { id: true, scheduledAt: true, createdAt: true, estDuration: true },
   });
-  const sum = ahead.reduce((s, t) => s + t.estDuration, 0);
-  return { peopleAhead: ahead.length, remainingMinutes: sum };
+
+  const ahead = candidates.filter(
+    (t) => t.id !== ticket.id && (t.scheduledAt ?? t.createdAt).getTime() < myEff
+  );
+  const remainingMinutes = ahead.reduce((s, t) => s + t.estDuration, 0);
+  return { peopleAhead: ahead.length, remainingMinutes };
 }
 
 // إنهاء خدمة العميل الحالي وتحرير الحلاق
@@ -246,7 +276,7 @@ export async function callNextCustomer(barberId: bigint): Promise<NextResult> {
         AND (barber_id = ${barberId} OR barber_id IS NULL)
       ORDER BY COALESCE(position, 999999) ASC,
                (barber_id = ${barberId}) DESC,
-               created_at ASC
+               COALESCE(scheduled_at, created_at) ASC
       LIMIT 1
       FOR UPDATE SKIP LOCKED;
     `);
