@@ -18,10 +18,11 @@ export async function createBookingAction(
   const customerName = String(formData.get("customerName") ?? "").trim();
   const phoneRaw = String(formData.get("customerPhone") ?? "").trim();
   const barberRaw = String(formData.get("barberId") ?? ""); // "" = أول حلاق متاح
-  const serviceRaw = String(formData.get("serviceId") ?? "");
+  // قد تُختار خدمة واحدة أو أكثر
+  const serviceRawList = formData.getAll("serviceIds").map((v) => String(v)).filter(Boolean);
 
   if (!customerName) return { error: "يرجى إدخال الاسم" };
-  if (!serviceRaw) return { error: "يرجى اختيار الخدمة" };
+  if (serviceRawList.length === 0) return { error: "يرجى اختيار خدمة واحدة على الأقل" };
 
   const shop = await prisma.shop.findUnique({
     where: { slug },
@@ -39,11 +40,11 @@ export async function createBookingAction(
     return { error: "نعتذر منك، استقبال العملاء متوقف حالياً في هذا الفرع" };
   }
 
-  // التحقق من الخدمة (نشطة وتابعة لهذا المحل)
-  const service = await prisma.service.findFirst({
-    where: { id: BigInt(serviceRaw), shopId: shop.id, isActive: true },
+  // التحقق من الخدمات المختارة (نشطة وتابعة لهذا المحل)
+  const validServices = await prisma.service.findMany({
+    where: { id: { in: serviceRawList.map((s) => BigInt(s)) }, shopId: shop.id, isActive: true },
   });
-  if (!service) return { error: "الخدمة المختارة غير متاحة، اختر غيرها" };
+  if (validServices.length === 0) return { error: "الخدمة المختارة غير متاحة، اختر غيرها" };
 
   // حلاق محدد أم pool مشترك
   let barberId: bigint | null = null;
@@ -56,7 +57,7 @@ export async function createBookingAction(
   const ticket = await createTicket({
     shopId: shop.id,
     barberId,
-    serviceId: service.id,
+    serviceIds: validServices.map((s) => s.id),
     customerName,
     customerPhone: phoneRaw || null,
     timezone: shop.timezone,

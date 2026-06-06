@@ -15,7 +15,7 @@ export function serviceDateFor(timezone: string): Date {
 export interface CreateTicketInput {
   shopId: bigint;
   barberId: bigint | null; // null = pool "أول حلاق متاح"
-  serviceId: bigint;
+  serviceIds: bigint[]; // خدمة واحدة أو أكثر — تُجمع مدّتها
   customerName: string;
   customerPhone?: string | null;
   timezone: string;
@@ -59,11 +59,17 @@ export async function resolveEstDuration(
 // يعتمد على INSERT ... ON CONFLICT DO UPDATE الذي يقفل صف العدّاد ذرّياً
 export async function createTicket(input: CreateTicketInput): Promise<Ticket> {
   const serviceDate = serviceDateFor(input.timezone);
-  const estDuration = await resolveEstDuration(
-    input.shopId,
-    input.barberId,
-    input.serviceId
-  );
+
+  // اجمع مدد كل الخدمات المختارة + كوّن نصّ العرض
+  const services = await prisma.service.findMany({
+    where: { id: { in: input.serviceIds }, shopId: input.shopId },
+  });
+  let estDuration = 0;
+  for (const sid of input.serviceIds) {
+    estDuration += await resolveEstDuration(input.shopId, input.barberId, sid);
+  }
+  if (estDuration <= 0) estDuration = 20;
+  const serviceLabel = services.map((s) => s.name).join(" + ") || null;
 
   return prisma.$transaction(async (tx) => {
     const rows = await tx.$queryRaw<{ last_number: number }[]>(Prisma.sql`
@@ -79,7 +85,8 @@ export async function createTicket(input: CreateTicketInput): Promise<Ticket> {
       data: {
         shopId: input.shopId,
         barberId: input.barberId,
-        serviceId: input.serviceId,
+        serviceId: input.serviceIds[0] ?? null,
+        serviceLabel,
         customerName: input.customerName,
         customerPhone: input.customerPhone ?? null,
         serviceDate,
@@ -116,17 +123,13 @@ export async function queueInfoFor(ticket: Ticket): Promise<QueueInfo> {
     return { peopleAhead: ahead.length, remainingMinutes: remaining };
   }
 
-  // حالة: pool مشترك ← مجموع المدد موزّعاً على عدد الحلاقين المتاحين (طابور متوازٍ)
+  // حالة: pool مشترك ← مجموع مدد من قبله (بلا قسمة — أوضح وأأمن للزبون)
   const ahead = await prisma.ticket.findMany({
     where: { ...sharedWhere, barberId: null },
     select: { estDuration: true },
   });
   const sum = ahead.reduce((s, t) => s + t.estDuration, 0);
-  const availableCount = await prisma.user.count({
-    where: { shopId: ticket.shopId, role: { in: ["manager", "barber"] }, status: "available", isActive: true },
-  });
-  const parallelism = Math.max(availableCount, 1);
-  return { peopleAhead: ahead.length, remainingMinutes: Math.round(sum / parallelism) };
+  return { peopleAhead: ahead.length, remainingMinutes: sum };
 }
 
 // إنهاء خدمة العميل الحالي وتحرير الحلاق

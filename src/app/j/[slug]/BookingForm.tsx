@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { createBookingAction, type BookingState } from "./actions";
 
@@ -34,6 +34,12 @@ function SubmitButton() {
 
 export default function BookingForm({ slug, barbers, services, showProviderChoice, allowServiceChoice }: Props) {
   const showServicePicker = allowServiceChoice && services.length > 1;
+  const [selected, setSelected] = useState<string[]>([]);
+  const totalMin = services
+    .filter((s) => selected.includes(s.id))
+    .reduce((sum, s) => sum + s.duration, 0);
+  const toggle = (id: string) =>
+    setSelected((cur) => (cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id]));
   const [state, formAction] = useActionState<BookingState, FormData>(
     createBookingAction,
     {}
@@ -69,20 +75,45 @@ export default function BookingForm({ slug, barbers, services, showProviderChoic
 
       {!showServicePicker ? (
         // خدمة واحدة أو الاختيار معطّل ← تُستخدم الأولى تلقائياً
-        <input type="hidden" name="serviceId" value={services[0]?.id ?? ""} />
+        <input type="hidden" name="serviceIds" value={services[0]?.id ?? ""} />
       ) : (
         <div className="flex flex-col gap-2">
-          <label className="font-bold text-sm">الخدمة المطلوبة</label>
-          <select name="serviceId" required defaultValue="" className="input-field px-4 py-3 text-lg">
-            <option value="" disabled>
-              اختر الخدمة
-            </option>
-            {services.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name} (~{s.duration} د)
-              </option>
-            ))}
-          </select>
+          <label className="font-bold text-sm">
+            الخدمات المطلوبة <span className="muted font-normal">(يمكنك اختيار أكثر من واحدة)</span>
+          </label>
+          <div className="flex flex-col gap-2">
+            {services.map((s) => {
+              const on = selected.includes(s.id);
+              return (
+                <label
+                  key={s.id}
+                  className="flex items-center justify-between px-4 py-3 rounded-xl border-2 cursor-pointer"
+                  style={{
+                    borderColor: on ? "var(--accent)" : "var(--border)",
+                    background: on ? "var(--surface-2)" : "transparent",
+                  }}
+                >
+                  <span className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      name="serviceIds"
+                      value={s.id}
+                      checked={on}
+                      onChange={() => toggle(s.id)}
+                      className="w-5 h-5"
+                    />
+                    <span className="font-bold">{s.name}</span>
+                  </span>
+                  <span className="muted text-sm">~{s.duration} د</span>
+                </label>
+              );
+            })}
+          </div>
+          {totalMin > 0 && (
+            <p className="text-sm font-bold" style={{ color: "var(--accent)" }}>
+              المدة الإجمالية التقريبية: ~{totalMin} دقيقة
+            </p>
+          )}
         </div>
       )}
 

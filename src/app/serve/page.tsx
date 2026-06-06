@@ -57,7 +57,7 @@ export default async function ServePage() {
             ? {
                 ticketNumber: current.ticketNumber,
                 customerName: current.customerName,
-                serviceName: current.service?.name ?? null,
+                serviceName: current.serviceLabel ?? current.service?.name ?? null,
               }
             : null
         }

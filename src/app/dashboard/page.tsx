@@ -100,7 +100,7 @@ export default async function DashboardPage() {
               embedded
               current={
                 current
-                  ? { ticketNumber: current.ticketNumber, customerName: current.customerName, serviceName: current.service?.name ?? null }
+                  ? { ticketNumber: current.ticketNumber, customerName: current.customerName, serviceName: current.serviceLabel ?? current.service?.name ?? null }
                   : null
               }
             />

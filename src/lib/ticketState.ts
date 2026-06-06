@@ -99,7 +99,7 @@ export async function getTicketState(token: string): Promise<TicketState | null>
     remainingMinutes,
     remainingSeconds,
     countdownActive,
-    serviceName: ticket.service?.name ?? null,
+    serviceName: ticket.serviceLabel ?? ticket.service?.name ?? null,
     barberName: ticket.barber?.name ?? null,
     headline,
     settings: {
