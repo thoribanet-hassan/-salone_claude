@@ -10,7 +10,14 @@ export interface RegisterState {
   error?: string;
 }
 
-const VALID: FacilityType[] = ["male_barber", "female_salon", "restaurant", "clinic", "general"];
+// يستنتج المظهر/الافتراضات من النص الحر الذي كتبه صاحب المنشأة — النص نفسه هو الظاهر للزبائن
+function inferFacilityType(label: string): FacilityType {
+  if (/حلاق|رجالي|باربر/.test(label)) return "male_barber";
+  if (/نسائي|تجميل|كوافير|مشغل|ميك ?اب|صالون/.test(label)) return "female_salon";
+  if (/مطعم|كوفي|مقهى|كافيه|قهوة|بوفيه|مطبخ|حلويات/.test(label)) return "restaurant";
+  if (/عيادة|مستوصف|طبي|طب|أسنان|اسنان|مجمع|مختبر|صيدلية/.test(label)) return "clinic";
+  return "general";
+}
 
 // إعدادات افتراضية معقولة لكل نوع — كلها قابلة للتغيير لاحقاً من لوحة التحكم الموحّدة
 const TYPE_DEFAULTS: Record<
@@ -32,13 +39,14 @@ export async function registerAction(
   const ownerName = String(formData.get("ownerName") ?? "").trim();
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const password = String(formData.get("password") ?? "");
-  const facilityType = String(formData.get("facilityType") ?? "") as FacilityType;
+  const facilityLabel = String(formData.get("facilityLabel") ?? "").trim();
   const timezone = String(formData.get("timezone") ?? "Asia/Riyadh") || "Asia/Riyadh";
 
-  if (!shopName || !ownerName || !email || !password)
+  if (!shopName || !ownerName || !email || !password || !facilityLabel)
     return { error: "يرجى تعبئة كل الحقول" };
   if (password.length < 6) return { error: "كلمة المرور 6 أحرف على الأقل" };
-  if (!VALID.includes(facilityType)) return { error: "اختر نوع المنشأة" };
+
+  const facilityType = inferFacilityType(facilityLabel);
 
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) return { error: "هذا البريد مسجّل مسبقاً" };
@@ -52,6 +60,7 @@ export async function registerAction(
       name: shopName,
       ownerName,
       facilityType,
+      facilityLabel,
       slug,
       shopCode,
       timezone,

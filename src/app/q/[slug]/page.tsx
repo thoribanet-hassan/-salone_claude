@@ -22,7 +22,7 @@ export default async function QrPage({
         {/* الملصق القابل للطباعة والتعليق في المحل */}
         <div id="poster" className="qr-print-area surface w-full p-8 flex flex-col items-center gap-5 text-center">
           <div>
-            <p className="muted text-sm">{theme.label}</p>
+            <p className="muted text-sm">{shop.facilityLabel || theme.label}</p>
             <h1 className="text-3xl font-extrabold mt-1">{shop.name}</h1>
           </div>
 

@@ -59,7 +59,8 @@ model Shop {
   id           BigInt       @id @default(autoincrement())
   name         String
   ownerName    String       @map("owner_name")
-  facilityType FacilityType @map("facility_type")
+  facilityType FacilityType @map("facility_type") // داخلي: للمظهر والمصطلحات فقط (يُستنتج من النص)
+  facilityLabel String      @default("") @map("facility_label") // نوع المنشأة كما كتبه صاحبها — هو الظاهر للزبائن
   shopCode     String       @unique @map("shop_code")
   slug         String       @unique
   plan         Plan         @default(basic)

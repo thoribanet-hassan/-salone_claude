@@ -77,7 +77,7 @@ export default async function DashboardPage() {
     <main className={`${theme.className} min-h-screen flex flex-col items-center px-4 py-6`}>
       <div className="w-full max-w-md flex flex-col gap-5">
         <header className="text-center">
-          <p className="muted text-sm">{theme.label}</p>
+          <p className="muted text-sm">{shop.facilityLabel || theme.label}</p>
           <h1 className="text-2xl font-extrabold">{shop.name}</h1>
           <p className="muted text-xs mt-1">رمز المحل: {shop.shopCode}</p>
           <div className="flex gap-2 justify-center mt-3 text-sm">

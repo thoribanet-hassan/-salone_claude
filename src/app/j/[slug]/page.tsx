@@ -58,7 +58,7 @@ export default async function JoinPage({
     <main className={`${theme.className} min-h-screen flex flex-col items-center px-5 py-8`}>
       <div className="w-full max-w-md flex flex-col gap-6">
         <header className="text-center mt-4">
-          <p className="muted text-sm mb-1">{theme.label}</p>
+          <p className="muted text-sm mb-1">{shop.facilityLabel || theme.label}</p>
           <h1 className="text-3xl font-extrabold">{shop.name}</h1>
         </header>
 
