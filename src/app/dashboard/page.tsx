@@ -126,27 +126,35 @@ export default async function DashboardPage() {
           <QrActions slug={shop.slug} shopName={shop.name} joinUrl={joinUrl} />
         </section>
 
-        {/* الإعدادات */}
+        {/* لوحة التحكم الموحّدة — كل خصائص المنشأة تُفعَّل وتُختار من هنا */}
         <section className="surface p-5">
           <h2 className="font-extrabold mb-2">الإعدادات</h2>
           <form action={updateSettingsAction} className="flex flex-col">
             <Toggle name="isOpen" label="استقبال العملاء مفتوح" checked={!!st?.isOpen} />
-            <Toggle name="allowProviderChoice" label="السماح باختيار الموظف (وإلا حجز موحّد)" checked={!!st?.allowProviderChoice} />
-            <Toggle name="allowServiceChoice" label="السماح باختيار الخدمة (وإلا الخدمة الافتراضية)" checked={!!st?.allowServiceChoice} />
-            <Toggle name="showPrices" label="عرض أسعار الخدمات للزبون" checked={!!st?.showPrices} />
-            <Toggle name="showCountdown" label="عرض العدّاد الحي" checked={!!st?.showCountdown} />
-            <Toggle name="showExpectedTime" label="عرض الوقت المتوقع" checked={!!st?.showExpectedTime} />
-            <Toggle name="showPeopleAhead" label="عرض عدد من قبله" checked={!!st?.showPeopleAhead} />
-            <Toggle name="showBarberName" label="عرض اسم الموظف على التذكرة" checked={!!st?.showBarberName} />
-            <label className="flex items-center justify-between py-2">
-              <span>وضع العدّاد</span>
+
+            <p className="font-bold text-sm mt-3 mb-1" style={{ color: "var(--accent)" }}>نموذج الموظفين</p>
+            <Toggle name="allowProviderChoice" label="عدة موظفين يتقاسمون المهام (الزبون يختار الموظف) — وإلا دور واحد موحّد" checked={!!st?.allowProviderChoice} />
+            <Toggle name="showBarberName" label="عرض اسم الموظف على تذكرة الزبون" checked={!!st?.showBarberName} />
+
+            <p className="font-bold text-sm mt-3 mb-1" style={{ color: "var(--accent)" }}>نظام الزمن</p>
+            <label className="flex items-center justify-between py-2 gap-2">
+              <span>طريقة الدور</span>
               <select name="countdownMode" defaultValue={st?.countdownMode ?? "auto"} className="input-field px-3 py-2">
-                <option value="auto">زمني تلقائي (من مدد الخدمات)</option>
-                <option value="manual">زمني يدوي (الموظف يحدّد الوقت)</option>
+                <option value="auto">بوقت المهمة (زمن تلقائي)</option>
+                <option value="manual">زمني يدوي (الموظف يحدّد)</option>
                 <option value="none">بالرقم فقط — بدون زمن</option>
               </select>
             </label>
-            <button className="btn-accent py-3 mt-2 font-bold">حفظ الإعدادات</button>
+            <Toggle name="allowScheduling" label="السماح بالحجز في ساعة معينة (مواعيد)" checked={!!st?.allowScheduling} />
+            <Toggle name="showCountdown" label="عرض العدّاد الحي للزبون" checked={!!st?.showCountdown} />
+            <Toggle name="showExpectedTime" label="عرض الوقت المتوقع" checked={!!st?.showExpectedTime} />
+
+            <p className="font-bold text-sm mt-3 mb-1" style={{ color: "var(--accent)" }}>الخدمات والعرض</p>
+            <Toggle name="allowServiceChoice" label="السماح باختيار الخدمة (وإلا الخدمة الافتراضية)" checked={!!st?.allowServiceChoice} />
+            <Toggle name="showPrices" label="عرض أسعار الخدمات للزبون" checked={!!st?.showPrices} />
+            <Toggle name="showPeopleAhead" label="عرض عدد من قبله" checked={!!st?.showPeopleAhead} />
+
+            <button className="btn-accent py-3 mt-3 font-bold">حفظ الإعدادات</button>
           </form>
         </section>
 

@@ -10,7 +10,19 @@ export interface RegisterState {
   error?: string;
 }
 
-const VALID: FacilityType[] = ["male_barber", "female_salon", "general"];
+const VALID: FacilityType[] = ["male_barber", "female_salon", "restaurant", "clinic", "general"];
+
+// إعدادات افتراضية معقولة لكل نوع — كلها قابلة للتغيير لاحقاً من لوحة التحكم الموحّدة
+const TYPE_DEFAULTS: Record<
+  FacilityType,
+  { providerChoice: boolean; countdownMode: "auto" | "manual" | "none"; defaultService: string }
+> = {
+  male_barber: { providerChoice: true, countdownMode: "auto", defaultService: "خدمة" },
+  female_salon: { providerChoice: true, countdownMode: "auto", defaultService: "خدمة" },
+  restaurant: { providerChoice: false, countdownMode: "manual", defaultService: "دخول الطابور" },
+  clinic: { providerChoice: false, countdownMode: "none", defaultService: "كشف" },
+  general: { providerChoice: false, countdownMode: "none", defaultService: "دخول الطابور" },
+};
 
 export async function registerAction(
   _prev: RegisterState,
@@ -33,7 +45,7 @@ export async function registerAction(
 
   const slug = await uniqueSlug(arabicToSlug(shopName));
   const shopCode = await generateShopCode();
-  const isGeneral = facilityType === "general";
+  const d = TYPE_DEFAULTS[facilityType];
 
   const shop = await prisma.shop.create({
     data: {
@@ -46,9 +58,9 @@ export async function registerAction(
       settings: {
         create: {
           isOpen: true,
-          allowProviderChoice: !isGeneral,
-          showBarberName: !isGeneral,
-          countdownMode: isGeneral ? "manual" : "auto",
+          allowProviderChoice: d.providerChoice,
+          showBarberName: d.providerChoice,
+          countdownMode: d.countdownMode,
         },
       },
       // المدير = حلاق أيضاً
@@ -64,7 +76,7 @@ export async function registerAction(
       },
       // خدمة افتراضية ليعمل الحجز فوراً
       services: {
-        create: { name: isGeneral ? "دخول الطابور" : "خدمة", defaultDuration: 20, position: 1 },
+        create: { name: d.defaultService, defaultDuration: 20, position: 1 },
       },
     },
     include: { users: true, services: true },

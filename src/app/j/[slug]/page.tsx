@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/db";
-import { themeFor, allowsProviderChoice } from "@/lib/theme";
+import { themeFor } from "@/lib/theme";
 import BookingForm from "./BookingForm";
 
 // لا تخزين مؤقت — تظهر الخدمات/الحالة المحدّثة فوراً للزبون
@@ -80,15 +80,13 @@ export default async function JoinPage({
               </p>
               <BookingForm
                 slug={shop.slug}
-                showProviderChoice={
-                  allowsProviderChoice(shop.facilityType) &&
-                  !!shop.settings?.allowProviderChoice
-                }
+                showProviderChoice={!!shop.settings?.allowProviderChoice}
                 barbers={availableBarbers.map((b) => ({
                   id: b.id.toString(),
                   name: b.name,
                 }))}
                 allowServiceChoice={!!shop.settings?.allowServiceChoice}
+                allowScheduling={!!shop.settings?.allowScheduling}
                 showPrices={!!shop.settings?.showPrices}
                 services={shop.services.map((s) => ({
                   id: s.id.toString(),

@@ -9,7 +9,7 @@ export default function RegisterPage() {
       <div className="w-full max-w-md flex flex-col gap-6">
         <header className="text-center mt-2">
           <h1 className="text-3xl font-extrabold" style={{ color: "var(--accent)" }}>دورك</h1>
-          <p className="muted text-sm mt-1">أنشئ محلك وابدأ إدارة الطابور خلال دقيقة</p>
+          <p className="muted text-sm mt-1">أنشئ منشأتك وابدأ إدارة الانتظار خلال دقيقة</p>
         </header>
         <div className="surface p-6">
           <RegisterForm />

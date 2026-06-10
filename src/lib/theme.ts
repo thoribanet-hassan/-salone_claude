@@ -1,4 +1,4 @@
-// نظام التصميم المزدوج — يُختار الثيم آلياً من نوع المنشأة
+// نظام الثيمات — النوع يحدّد المظهر والمصطلحات فقط؛ السلوك كله من لوحة التحكم
 import type { FacilityType } from "@prisma/client";
 
 export type ThemeKey = "barber" | "salon" | "general";
@@ -9,27 +9,17 @@ export interface ThemeConfig {
   label: string;
   // المصطلحات (مذكّر/مؤنّث وحسب نوع المنشأة)
   terms: {
-    provider: string; // "الحلاق" / "الأخصائية"
-    providerPlural: string; // "الحلاقين" / "الأخصائيات"
-    seat: string; // "كرسي الحلاقة" / "مقعد الخدمة"
+    provider: string; // "الحلاق" / "الأخصائية" / "الموظف"
+    providerPlural: string;
+    seat: string;
     yourTurn: string; // رسالة "حان دورك"
     getReady: string; // رسالة "اقترب دورك"
   };
 }
 
-export const FACILITY_TO_THEME: Record<FacilityType, ThemeKey> = {
-  male_barber: "barber",
-  female_salon: "salon",
-  general: "general",
-};
-
-// الأنواع التي يختار فيها الزبون موظفاً محدداً (طابور عام = حجز موحّد بلا اختيار)
-export function allowsProviderChoice(facilityType: FacilityType): boolean {
-  return facilityType !== "general";
-}
-
-export const THEMES: Record<ThemeKey, ThemeConfig> = {
-  barber: {
+// إعداد كامل لكل نوع منشأة (المظهر مشترك أحياناً، المصطلحات خاصة)
+const FACILITY_CONFIG: Record<FacilityType, ThemeConfig> = {
+  male_barber: {
     key: "barber",
     className: "theme-barber",
     label: "حلاق رجالي",
@@ -41,7 +31,7 @@ export const THEMES: Record<ThemeKey, ThemeConfig> = {
       getReady: "اقترب دورك، يرجى الاستعداد",
     },
   },
-  salon: {
+  female_salon: {
     key: "salon",
     className: "theme-salon",
     label: "صالون تجميل نسائي",
@@ -53,10 +43,34 @@ export const THEMES: Record<ThemeKey, ThemeConfig> = {
       getReady: "اقترب دورك، يرجى الاستعداد",
     },
   },
+  restaurant: {
+    key: "general",
+    className: "theme-general",
+    label: "مطعم",
+    terms: {
+      provider: "الموظف",
+      providerPlural: "الموظفون",
+      seat: "الطاولة",
+      yourTurn: "حان دورك، تفضّل الآن",
+      getReady: "اقترب دورك، يرجى الاستعداد",
+    },
+  },
+  clinic: {
+    key: "general",
+    className: "theme-general",
+    label: "عيادة",
+    terms: {
+      provider: "الموظف",
+      providerPlural: "الموظفون",
+      seat: "غرفة الكشف",
+      yourTurn: "حان دورك، تفضّل الآن",
+      getReady: "اقترب دورك، يرجى الاستعداد",
+    },
+  },
   general: {
     key: "general",
     className: "theme-general",
-    label: "طابور عام",
+    label: "منشأة",
     terms: {
       provider: "الموظف",
       providerPlural: "الموظفون",
@@ -68,5 +82,5 @@ export const THEMES: Record<ThemeKey, ThemeConfig> = {
 };
 
 export function themeFor(facilityType: FacilityType): ThemeConfig {
-  return THEMES[FACILITY_TO_THEME[facilityType]];
+  return FACILITY_CONFIG[facilityType] ?? FACILITY_CONFIG.general;
 }

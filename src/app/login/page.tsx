@@ -14,7 +14,7 @@ export default function LoginPage() {
           <LoginForm />
         </div>
         <a href="/register" className="muted text-center text-sm no-underline">
-          ليس لديك محل؟ أنشئ محلاً جديداً
+          ليس لديك منشأة؟ أنشئ منشأة جديدة
         </a>
       </div>
     </main>

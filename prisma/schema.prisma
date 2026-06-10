@@ -9,11 +9,13 @@ datasource db {
   directUrl = env("DIRECT_URL") // اتصال مباشر للترحيلات (migrations)
 }
 
-// نوع المنشأة — يحدّد الثيم والمصطلحات (رجالي/نسائي/طابور عام)
+// نوع المنشأة — يحدّد الثيم والمصطلحات فقط؛ كل السلوك يُضبط من لوحة التحكم
 enum FacilityType {
   male_barber
   female_salon
-  general // طابور عام لأي منشأة (مطعم، عيادة…) — حجز موحّد بلا اختيار موظف
+  restaurant
+  clinic
+  general // أي منشأة أخرى
 }
 
 // خطة الاشتراك — تُضبط يدوياً في الـ MVP
@@ -90,6 +92,8 @@ model ShopSettings {
   showPrices Boolean @default(true) @map("show_prices")
   // وضع العدّاد: تلقائي (افتراضي) أو يدوي يُطلقه المدير
   countdownMode CountdownMode @default(auto) @map("countdown_mode")
+  // السماح للزبون بالحجز في ساعة معينة (مواعيد)
+  allowScheduling Boolean @default(true) @map("allow_scheduling")
 
   shop Shop @relation(fields: [shopId], references: [id], onDelete: Cascade)
 

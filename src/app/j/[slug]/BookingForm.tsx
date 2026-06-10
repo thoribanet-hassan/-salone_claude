@@ -22,6 +22,7 @@ interface Props {
   services: ServiceOption[];
   showProviderChoice: boolean;
   allowServiceChoice: boolean;
+  allowScheduling: boolean; // السماح بالحجز في ساعة معينة (من لوحة التحكم)
   showPrices: boolean;
 }
 
@@ -34,7 +35,7 @@ function SubmitButton() {
   );
 }
 
-export default function BookingForm({ slug, barbers, services, showProviderChoice, allowServiceChoice, showPrices }: Props) {
+export default function BookingForm({ slug, barbers, services, showProviderChoice, allowServiceChoice, allowScheduling, showPrices }: Props) {
   // تظهر كل الخدمات النشطة للاختيار (حتى لو واحدة). تُخفى فقط إن عطّل المدير اختيار الخدمة.
   const showServicePicker = allowServiceChoice && services.length >= 1;
   const [selected, setSelected] = useState<string[]>(
@@ -149,7 +150,9 @@ export default function BookingForm({ slug, barbers, services, showProviderChoic
         </div>
       )}
 
-      {/* وقت الحضور: الآن أو موعد محدّد */}
+      {/* وقت الحضور: الآن أو موعد محدّد — يظهر فقط إن فعّل المدير المواعيد */}
+      {!allowScheduling && <input type="hidden" name="whenMode" value="now" />}
+      {allowScheduling && (
       <div className="flex flex-col gap-2">
         <label className="font-bold text-sm">وقت حضورك</label>
         <input type="hidden" name="whenMode" value={whenMode} />
@@ -231,6 +234,7 @@ export default function BookingForm({ slug, barbers, services, showProviderChoic
           </div>
         )}
       </div>
+      )}
 
       {state.error && (
         <p className="text-red-400 text-sm font-bold text-center">{state.error}</p>

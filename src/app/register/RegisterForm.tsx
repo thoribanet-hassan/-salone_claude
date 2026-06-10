@@ -8,7 +8,9 @@ import { registerAction, type RegisterState } from "./actions";
 const TYPES = [
   { value: "male_barber", label: "حلاق رجالي", icon: "💈" },
   { value: "female_salon", label: "صالون تجميل نسائي", icon: "💅" },
-  { value: "general", label: "مكان مزدحم (طابور عام)", icon: "🎫" },
+  { value: "restaurant", label: "مطعم", icon: "🍽️" },
+  { value: "clinic", label: "عيادة", icon: "🩺" },
+  { value: "general", label: "منشأة أخرى", icon: "🎫" },
 ];
 
 function SubmitButton() {
@@ -50,9 +52,10 @@ export default function RegisterForm() {
       </div>
 
       <div className="flex flex-col gap-2">
-        <label className="font-bold text-sm">اسم المحل</label>
-        <input name="shopName" required placeholder="مثال: صالون النخبة" className="input-field px-4 py-3 text-lg" />
+        <label className="font-bold text-sm">اسم المنشأة</label>
+        <input name="shopName" required placeholder="مثال: صالون النخبة / مطعم الذوّاقة" className="input-field px-4 py-3 text-lg" />
       </div>
+      <p className="muted text-xs -mt-2">كل التفاصيل الأخرى (الموظفون، نظام الزمن، المواعيد…) تُضبط لاحقاً من لوحة التحكم.</p>
       <div className="flex flex-col gap-2">
         <label className="font-bold text-sm">اسم المالك</label>
         <input name="ownerName" required placeholder="اسمك" className="input-field px-4 py-3 text-lg" />
