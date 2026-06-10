@@ -141,9 +141,9 @@ export default async function DashboardPage() {
             <label className="flex items-center justify-between py-2">
               <span>وضع العدّاد</span>
               <select name="countdownMode" defaultValue={st?.countdownMode ?? "auto"} className="input-field px-3 py-2">
-                <option value="auto">تلقائي</option>
-                <option value="manual">يدوي (مطعم/زحمة)</option>
-                <option value="none">بدون تقدير زمني (عيادة)</option>
+                <option value="auto">زمني تلقائي (من مدد الخدمات)</option>
+                <option value="manual">زمني يدوي (الموظف يحدّد الوقت)</option>
+                <option value="none">بالرقم فقط — بدون زمن</option>
               </select>
             </label>
             <button className="btn-accent py-3 mt-2 font-bold">حفظ الإعدادات</button>

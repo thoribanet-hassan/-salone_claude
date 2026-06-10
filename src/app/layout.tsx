@@ -9,8 +9,8 @@ const tajawal = Tajawal({
 });
 
 export const metadata: Metadata = {
-  title: "دورك | إدارة الطوابير",
-  description: "نظام «دورك» لإدارة طوابير محلات الحلاقة وصالونات التجميل والطوابير العامة عبر QR",
+  title: "دورك | نظام إدارة الانتظار في الأماكن المزدحمة",
+  description: "«دورك» — نظام إدارة الانتظار في الأماكن المزدحمة: حلاقين، صالونات، مطاعم، عيادات وغيرها — عبر QR وبدون أي تطبيق",
 };
 
 export default function RootLayout({
