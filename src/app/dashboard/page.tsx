@@ -58,6 +58,7 @@ export default async function DashboardPage() {
 
   const theme = themeFor(shop.facilityType);
   const isManual = shop.settings?.countdownMode === "manual";
+  const noTimes = shop.settings?.countdownMode === "none";
   const joinUrl = joinUrlFor(shop.slug);
   const st = shop.settings;
   const dur = (barberId: bigint, serviceId: bigint) =>
@@ -96,6 +97,7 @@ export default async function DashboardPage() {
               role="manager"
               status={manager.status}
               isManual={isManual}
+              noTimes={noTimes}
               waitingCount={waitingAssigned + waitingPool}
               skipped={skipped.map((t) => ({ id: t.id.toString(), ticketNumber: t.ticketNumber, customerName: t.customerName }))}
               embedded
@@ -141,6 +143,7 @@ export default async function DashboardPage() {
               <select name="countdownMode" defaultValue={st?.countdownMode ?? "auto"} className="input-field px-3 py-2">
                 <option value="auto">تلقائي</option>
                 <option value="manual">يدوي (مطعم/زحمة)</option>
+                <option value="none">بدون تقدير زمني (عيادة)</option>
               </select>
             </label>
             <button className="btn-accent py-3 mt-2 font-bold">حفظ الإعدادات</button>

@@ -44,6 +44,7 @@ export async function getTicketState(token: string): Promise<TicketState | null>
   const theme = themeFor(ticket.shop.facilityType);
   const { peopleAhead, remainingMinutes: autoMinutes } = await queueInfoFor(ticket);
   const isManual = ticket.shop.settings?.countdownMode === "manual";
+  const isNone = ticket.shop.settings?.countdownMode === "none"; // عيادة: بلا تقدير زمني
 
   // موعد محدّد لم يحن بعد؟
   const scheduledFuture =
@@ -67,7 +68,8 @@ export async function getTicketState(token: string): Promise<TicketState | null>
       remainingSeconds = secs;
       remainingMinutes = Math.ceil(secs / 60);
       countdownActive = true;
-    } else if (isManual) {
+    } else if (isManual || isNone) {
+      // يدوي بلا تحديد بعد، أو وضع العيادة (لا تقدير زمني إطلاقاً)
       remainingMinutes = 0;
       remainingSeconds = 0;
     } else {

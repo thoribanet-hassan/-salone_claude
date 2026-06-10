@@ -36,6 +36,7 @@ export default async function ServePage() {
 
   const theme = themeFor(shop.facilityType);
   const isManual = shop.settings?.countdownMode === "manual";
+  const noTimes = shop.settings?.countdownMode === "none";
 
   return (
     <main className={`${theme.className} min-h-screen flex flex-col items-center px-5 py-6`}>
@@ -46,6 +47,7 @@ export default async function ServePage() {
         role={session.role}
         status={barber.status}
         isManual={isManual}
+        noTimes={noTimes}
         waitingCount={waitingAssigned + waitingPool}
         skipped={skipped.map((t) => ({
           id: t.id.toString(),

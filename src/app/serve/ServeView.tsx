@@ -30,6 +30,7 @@ interface Props {
   role: "manager" | "barber";
   status: "available" | "unavailable" | "busy";
   isManual: boolean;
+  noTimes?: boolean; // وضع العيادة: بلا أي تقدير/تحديد زمني — يتقدّم الدور بالإنهاء فقط
   waitingCount: number;
   current: Current | null;
   skipped?: Skipped[];
@@ -127,8 +128,8 @@ export default function ServeView(props: Props) {
           </button>
         )}
 
-        {/* تحديد/تقليص وقت جاهزية العميل التالي (إنهاء مبكر) — في كل الأوضاع عند وجود منتظر */}
-        {props.waitingCount > 0 && (
+        {/* تحديد/تقليص وقت جاهزية العميل التالي — يُخفى كلياً في وضع العيادة (بلا أزمنة) */}
+        {props.waitingCount > 0 && !props.noTimes && (
           <div className="surface p-4 mt-1">
             <p className="font-bold text-sm mb-3">
               {props.isManual

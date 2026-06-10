@@ -134,7 +134,8 @@ export async function setDurationAction(formData: FormData) {
 export async function updateSettingsAction(formData: FormData) {
   const { shopId } = await requireManager();
   const b = (k: string) => formData.get(k) === "on";
-  const mode = (String(formData.get("countdownMode")) === "manual" ? "manual" : "auto") as CountdownMode;
+  const modeRaw = String(formData.get("countdownMode"));
+  const mode = (["auto", "manual", "none"].includes(modeRaw) ? modeRaw : "auto") as CountdownMode;
   await prisma.shopSettings.update({
     where: { shopId },
     data: {

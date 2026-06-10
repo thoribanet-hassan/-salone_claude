@@ -54,7 +54,7 @@ export default function TicketView({
   const [state, setState] = useState<State>(initial);
   const [secondsLeft, setSecondsLeft] = useState<number>(initial.remainingSeconds);
   const [online, setOnline] = useState(true);
-  const [soundOn, setSoundOn] = useState(false);
+  const [soundOn, setSoundOn] = useState(true); // 🔔 التنبيه الصوتي مفعّل افتراضياً
   const inFlight = useRef(false);
 
   // صوت: AudioContext + لقطة حيّة من حالة الطابور لقراءتها داخل المؤقّت
@@ -63,6 +63,7 @@ export default function TicketView({
   const prevStatusRef = useRef(initial.status);
   const prevCountdownActiveRef = useRef(initial.countdownActive);
   const prevReadyAtMsRef = useRef(initial.readyAtMs);
+  const prevPeopleAheadRef = useRef(initial.peopleAhead);
   liveRef.current = { remainingMinutes: state.remainingMinutes, peopleAhead: state.peopleAhead };
 
   // العدّاد يُثبّت على لحظة هدف ليتناقص بسلاسة، ويُعاد ضبطه فقط حين تتغيّر تقدير الخادم
@@ -70,22 +71,41 @@ export default function TicketView({
   const targetRef = useRef<number>(0);
   const lastServerSecRef = useRef<number>(initial.remainingSeconds);
 
-  // تفعيل الصوت (يتطلب تفاعل المستخدم بسبب سياسة المتصفح)
+  // إنشاء/استئناف AudioContext (لا يصدر صوتاً بذاته)
+  const ensureCtx = useCallback(() => {
+    type AC = typeof AudioContext;
+    const Ctor: AC | undefined =
+      window.AudioContext ?? (window as unknown as { webkitAudioContext?: AC }).webkitAudioContext;
+    if (!Ctor) return null;
+    const ctx = ctxRef.current ?? new Ctor();
+    ctxRef.current = ctx;
+    void ctx.resume();
+    return ctx;
+  }, []);
+
+  // الصوت مفعّل افتراضياً — المتصفح يشترط لمسة واحدة لفتح الصوت، فنفتحه عند أول تفاعل بصمت
+  useEffect(() => {
+    const unlock = () => ensureCtx();
+    window.addEventListener("pointerdown", unlock, { once: true });
+    window.addEventListener("touchstart", unlock, { once: true });
+    window.addEventListener("keydown", unlock, { once: true });
+    return () => {
+      window.removeEventListener("pointerdown", unlock);
+      window.removeEventListener("touchstart", unlock);
+      window.removeEventListener("keydown", unlock);
+    };
+  }, [ensureCtx]);
+
+  // مفتاح الإيقاف/التشغيل اليدوي
   const toggleSound = useCallback(() => {
     if (soundOn) {
       setSoundOn(false);
       return;
     }
-    type AC = typeof AudioContext;
-    const Ctor: AC | undefined =
-      window.AudioContext ?? (window as unknown as { webkitAudioContext?: AC }).webkitAudioContext;
-    if (!Ctor) return;
-    const ctx = ctxRef.current ?? new Ctor();
-    ctxRef.current = ctx;
-    void ctx.resume();
-    playPattern(ctx, { freq: 880, count: 1, volume: 0.2 }); // نغمة تأكيد التفعيل
+    const ctx = ensureCtx();
+    if (ctx) playPattern(ctx, { freq: 880, count: 1, volume: 0.2 }); // نغمة تأكيد التفعيل
     setSoundOn(true);
-  }, [soundOn]);
+  }, [soundOn, ensureCtx]);
 
   // مزامنة كاملة مع قاعدة البيانات — يُعاد ضبط العدّاد من قيمة الخادم (لا يُبنى تراكمياً)
   const resync = useCallback(async () => {
@@ -167,6 +187,21 @@ export default function TicketView({
     }
     prevCountdownActiveRef.current = state.countdownActive;
   }, [state.countdownActive, state.status, soundOn]);
+
+  // 🆕 صفارة تنبيه عندما يصبح الزبون التالي في الدور (أنهى الموظف من قبله) — مهم لوضع العيادة
+  useEffect(() => {
+    const becameNext =
+      state.status === "waiting" &&
+      state.peopleAhead === 0 &&
+      prevPeopleAheadRef.current > 0;
+    if (becameNext) {
+      if (soundOn && ctxRef.current) playCountdownStartAlert(ctxRef.current);
+      if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+        navigator.vibrate?.([200, 100, 200, 100, 300]);
+      }
+    }
+    prevPeopleAheadRef.current = state.peopleAhead;
+  }, [state.peopleAhead, state.status, soundOn]);
 
   // 🆕 نغمة فريدة عندما يحدّد/يقلّص الموظف وقت الجاهزية (إنهاء مبكر) — في كل الأوضاع
   useEffect(() => {
