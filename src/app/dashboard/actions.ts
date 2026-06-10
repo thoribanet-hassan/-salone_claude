@@ -21,11 +21,51 @@ const PLAN_LIMITS: Record<string, number> = {
   enterprise: Infinity,
 };
 
-// ===== الحلاقون =====
+// مزامنة مهام موظف من نص حر ("قص شعر، دقن، تنظيف بشرة"):
+// تنشئ الخدمة إن لم توجد، تربطها بالموظف، وعند replace تفك ما لم يعد مذكوراً
+async function syncStaffTasks(
+  shopId: bigint,
+  staffId: bigint,
+  tasksText: string,
+  replace: boolean
+) {
+  const names = [
+    ...new Set(
+      tasksText
+        .split(/[،,\n]+/)
+        .map((s) => s.trim())
+        .filter(Boolean)
+    ),
+  ];
+  const linked: bigint[] = [];
+  for (const name of names) {
+    let svc = await prisma.service.findFirst({ where: { shopId, name } });
+    if (!svc) {
+      const count = await prisma.service.count({ where: { shopId } });
+      svc = await prisma.service.create({
+        data: { shopId, name, defaultDuration: 20, position: count + 1 },
+      });
+    }
+    await prisma.barberService.upsert({
+      where: { barberId_serviceId: { barberId: staffId, serviceId: svc.id } },
+      update: {},
+      create: { barberId: staffId, serviceId: svc.id, duration: svc.defaultDuration },
+    });
+    linked.push(svc.id);
+  }
+  if (replace) {
+    await prisma.barberService.deleteMany({
+      where: { barberId: staffId, serviceId: { notIn: linked } },
+    });
+  }
+}
+
+// ===== الموظفون =====
 export async function addBarberAction(formData: FormData) {
   const { shopId } = await requireManager();
   const name = String(formData.get("name") ?? "").trim();
   const avg = parseInt(String(formData.get("avgServiceTime") ?? "20"), 10) || 20;
+  const tasksText = String(formData.get("tasks") ?? "").trim();
   if (!name) return;
 
   const shop = await prisma.shop.findUnique({ where: { id: shopId } });
@@ -38,14 +78,29 @@ export async function addBarberAction(formData: FormData) {
   const barber = await prisma.user.create({
     data: { shopId, name, role: "barber", avgServiceTime: avg, loginCode, status: "available" },
   });
-  // إنشاء صفوف المصفوفة لكل الخدمات بالمدة الافتراضية
-  const services = await prisma.service.findMany({ where: { shopId } });
-  if (services.length) {
-    await prisma.barberService.createMany({
-      data: services.map((s) => ({ barberId: barber.id, serviceId: s.id, duration: s.defaultDuration })),
-    });
+  if (tasksText) {
+    // مهامه المكتوبة نصياً — تُنشأ كخدمات وتُربط به
+    await syncStaffTasks(shopId, barber.id, tasksText, false);
+  } else {
+    // لا مهام محددة ← اربطه بكل الخدمات الموجودة
+    const services = await prisma.service.findMany({ where: { shopId } });
+    if (services.length) {
+      await prisma.barberService.createMany({
+        data: services.map((s) => ({ barberId: barber.id, serviceId: s.id, duration: s.defaultDuration })),
+      });
+    }
   }
   revalidatePath("/dashboard");
+}
+
+// تعديل مهام موظف/مدير (نص حر، يستبدل القائمة الحالية)
+export async function setTasksAction(formData: FormData) {
+  const { shopId } = await requireManager();
+  const staffId = BigInt(String(formData.get("barberId")));
+  const tasksText = String(formData.get("tasks") ?? "");
+  await syncStaffTasks(shopId, staffId, tasksText, true);
+  revalidatePath("/dashboard");
+  revalidatePath("/j/[slug]", "page");
 }
 
 export async function regenerateCodeAction(formData: FormData) {

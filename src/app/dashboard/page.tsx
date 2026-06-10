@@ -8,6 +8,7 @@ import ServeView from "../serve/ServeView";
 import QrActions from "../q/[slug]/QrActions";
 import {
   addBarberAction,
+  setTasksAction,
   regenerateCodeAction,
   toggleBarberAction,
   setAvailabilityAction,
@@ -32,9 +33,10 @@ export default async function DashboardPage() {
       settings: true,
       services: { where: { isActive: true }, orderBy: { position: "asc" } },
       users: {
-        where: { role: "barber" },
-        orderBy: { createdAt: "asc" },
-        include: { barberServices: true },
+        // المدير ضمن الطاقم — يمارس مهاماً مهنية مثل الموظفين
+        where: { role: { in: ["manager", "barber"] } },
+        orderBy: [{ role: "asc" }, { createdAt: "asc" }],
+        include: { barberServices: { include: { service: true } } },
       },
     },
   });
@@ -158,31 +160,59 @@ export default async function DashboardPage() {
           </form>
         </section>
 
-        {/* الحلاقون */}
+        {/* الطاقم: المدير والموظفون — لكلٍّ مهامه */}
         <section className="surface p-5">
           <h2 className="font-extrabold mb-3">
-            الموظفون ({shop.users.filter((b) => b.isActive).length} من{" "}
+            الموظفون ({shop.users.filter((b) => b.isActive && b.role === "barber").length} من{" "}
             {shop.plan === "enterprise" ? "غير محدود" : ({ basic: 3, pro: 7, premium: 15 } as Record<string, number>)[shop.plan]})
           </h2>
           <div className="flex flex-col gap-3 mb-4">
             {shop.users.map((b) => (
               <div key={b.id.toString()} className="surface p-3" style={{ background: "var(--surface-2)", opacity: b.isActive ? 1 : 0.5 }}>
                 <div className="flex items-center justify-between">
-                  <span className="font-bold">{b.name}</span>
-                  <span className="text-sm">
-                    رمز دخوله:{" "}
-                    <span className="font-extrabold text-lg" style={{ color: "var(--accent)" }}>
-                      {b.loginCode ?? "—"}
-                    </span>
+                  <span className="font-bold">
+                    {b.name}
+                    {b.role === "manager" && (
+                      <span className="text-xs font-bold mr-2 px-2 py-0.5 rounded" style={{ background: "var(--accent)", color: "var(--accent-contrast)" }}>
+                        المدير
+                      </span>
+                    )}
                   </span>
+                  {b.role === "barber" && (
+                    <span className="text-sm">
+                      رمز دخوله:{" "}
+                      <span className="font-extrabold text-lg" style={{ color: "var(--accent)" }}>
+                        {b.loginCode ?? "—"}
+                      </span>
+                    </span>
+                  )}
                 </div>
-                <p className="muted text-xs mt-1">أعطِ هذا الرمز للموظف ليدخل من «دخول الموظف» برمز المحل {shop.shopCode}.</p>
+                {b.role === "barber" && (
+                  <p className="muted text-xs mt-1">أعطِ هذا الرمز للموظف ليدخل من «دخول الموظف» برمز المحل {shop.shopCode}.</p>
+                )}
                 <p className="text-xs mt-1">
                   الحالة:{" "}
                   <span className="font-bold" style={{ color: b.status === "available" ? "var(--accent)" : "var(--text-muted)" }}>
                     {b.status === "busy" ? "مشغول بعميل" : b.status === "available" ? "متاح" : "غير متاح (لا يدخل الدور)"}
                   </span>
                 </p>
+                {/* مهامه — نص حر يُنشئ الخدمات ويربطها به */}
+                <p className="text-xs mt-1">
+                  المهام:{" "}
+                  <span className="font-bold">
+                    {b.barberServices.map((x) => x.service.name).join("، ") || "—"}
+                  </span>
+                </p>
+                <form action={setTasksAction} className="flex gap-1 mt-2">
+                  <input type="hidden" name="barberId" value={b.id.toString()} />
+                  <input
+                    name="tasks"
+                    defaultValue={b.barberServices.map((x) => x.service.name).join("، ")}
+                    placeholder="مهامه: قص شعر، دقن، تنظيف بشرة…"
+                    className="input-field px-2 py-1 flex-1 text-sm"
+                  />
+                  <button className="px-2 py-1 rounded surface text-xs font-bold">حفظ المهام</button>
+                </form>
                 <div className="flex gap-2 mt-2 text-xs flex-wrap">
                   {/* توفّر مؤقّت: غداء/مشوار */}
                   <form action={setAvailabilityAction}>
@@ -192,26 +222,36 @@ export default async function DashboardPage() {
                       {b.status === "available" ? "اجعله غير متاح" : "اجعله متاحاً"}
                     </button>
                   </form>
-                  <form action={regenerateCodeAction}>
-                    <input type="hidden" name="barberId" value={b.id.toString()} />
-                    <button className="px-2 py-1 rounded surface">تجديد الرمز</button>
-                  </form>
-                  <form action={toggleBarberAction}>
-                    <input type="hidden" name="barberId" value={b.id.toString()} />
-                    <button className="px-2 py-1 rounded surface">{b.isActive ? "إيقاف الحساب" : "تفعيل الحساب"}</button>
-                  </form>
-                  <form action={deleteBarberAction}>
-                    <input type="hidden" name="barberId" value={b.id.toString()} />
-                    <button className="px-2 py-1 rounded surface text-red-400">حذف نهائي</button>
-                  </form>
+                  {b.role === "barber" && (
+                    <>
+                      <form action={regenerateCodeAction}>
+                        <input type="hidden" name="barberId" value={b.id.toString()} />
+                        <button className="px-2 py-1 rounded surface">تجديد الرمز</button>
+                      </form>
+                      <form action={toggleBarberAction}>
+                        <input type="hidden" name="barberId" value={b.id.toString()} />
+                        <button className="px-2 py-1 rounded surface">{b.isActive ? "إيقاف الحساب" : "تفعيل الحساب"}</button>
+                      </form>
+                      <form action={deleteBarberAction}>
+                        <input type="hidden" name="barberId" value={b.id.toString()} />
+                        <button className="px-2 py-1 rounded surface text-red-400">حذف نهائي</button>
+                      </form>
+                    </>
+                  )}
                 </div>
               </div>
             ))}
           </div>
           <form action={addBarberAction} className="flex flex-col gap-2">
             <input name="name" required placeholder="اسم الموظف الجديد" className="input-field px-3 py-2" />
+            <input
+              name="tasks"
+              placeholder="مهامه (افصل بفاصلة): قص شعر، دقن، تنظيف بشرة…"
+              className="input-field px-3 py-2"
+            />
             <input name="avgServiceTime" type="number" defaultValue={20} placeholder="مدة افتراضية (دقيقة)" className="input-field px-3 py-2" />
             <button className="btn-accent py-3 font-bold">+ إضافة موظف</button>
+            <p className="muted text-xs">المهام تُنشأ تلقائياً كخدمات وتُربط بالموظف — وتستطيع تركها فارغة ليؤدي كل الخدمات.</p>
           </form>
         </section>
 
