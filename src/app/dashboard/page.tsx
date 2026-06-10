@@ -83,6 +83,7 @@ export default async function DashboardPage() {
           <h1 className="text-2xl font-extrabold">{shop.name}</h1>
           <p className="muted text-xs mt-1">رمز المحل: {shop.shopCode}</p>
           <div className="flex gap-2 justify-center mt-3 text-sm">
+            <a href="/dashboard/stats" className="surface px-3 py-2 font-bold no-underline">📊 الإحصائيات</a>
             <a href={`/q/${shop.slug}`} className="surface px-3 py-2 font-bold no-underline">ملصق QR كامل</a>
             <a href="/api/logout" className="surface px-3 py-2 font-bold no-underline">خروج</a>
           </div>
