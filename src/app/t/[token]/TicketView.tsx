@@ -55,6 +55,7 @@ export default function TicketView({
   const [secondsLeft, setSecondsLeft] = useState<number>(initial.remainingSeconds);
   const [online, setOnline] = useState(true);
   const [soundOn, setSoundOn] = useState(true); // 🔔 التنبيه الصوتي مفعّل افتراضياً
+  const [queueMoved, setQueueMoved] = useState<number | null>(null); // شريط "تقدّم الدور" المؤقت
   const inFlight = useRef(false);
 
   // صوت: AudioContext + لقطة حيّة من حالة الطابور لقراءتها داخل المؤقّت
@@ -164,9 +165,18 @@ export default function TicketView({
   }, [soundOn, state.status]);
 
   // نغمة "حان دورك" المميّزة عند انتقال الحالة إلى serving
+  // + تنبيه قوي عند تخطّي الدور (لم يحضر عند مناداته)
   useEffect(() => {
     if (prevStatusRef.current !== "serving" && state.status === "serving" && soundOn && ctxRef.current) {
       playTurnChime(ctxRef.current);
+    }
+    if (prevStatusRef.current !== "skipped" && state.status === "skipped") {
+      if (soundOn && ctxRef.current) {
+        playPattern(ctxRef.current, { freq: 520, count: 3, volume: 0.3 }); // نغمة منخفضة مكررة = تنبيه تخطٍّ
+      }
+      if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+        navigator.vibrate?.([300, 100, 300]);
+      }
     }
     prevStatusRef.current = state.status;
   }, [state.status, soundOn]);
@@ -189,19 +199,34 @@ export default function TicketView({
   }, [state.countdownActive, state.status, soundOn]);
 
   // 🆕 صفارة تنبيه عندما يصبح الزبون التالي في الدور (أنهى الموظف من قبله) — مهم لوضع العيادة
+  // وإن تقدّم الدور دون أن يصبح التالي (إنهاء/تخطّي من قبله): شريط كتابي + نغمة خفيفة
   useEffect(() => {
-    const becameNext =
-      state.status === "waiting" &&
-      state.peopleAhead === 0 &&
-      prevPeopleAheadRef.current > 0;
+    const moved =
+      state.status === "waiting" && state.peopleAhead < prevPeopleAheadRef.current;
+    const becameNext = moved && state.peopleAhead === 0;
     if (becameNext) {
       if (soundOn && ctxRef.current) playCountdownStartAlert(ctxRef.current);
       if (typeof navigator !== "undefined" && "vibrate" in navigator) {
         navigator.vibrate?.([200, 100, 200, 100, 300]);
       }
+    } else if (moved) {
+      setQueueMoved(state.peopleAhead);
+      if (soundOn && ctxRef.current) {
+        playPattern(ctxRef.current, { freq: 700, count: 1, volume: 0.18 }); // نقرة خفيفة
+      }
+      if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+        navigator.vibrate?.(120);
+      }
     }
     prevPeopleAheadRef.current = state.peopleAhead;
   }, [state.peopleAhead, state.status, soundOn]);
+
+  // إخفاء شريط "تقدّم الدور" تلقائياً بعد ثوانٍ
+  useEffect(() => {
+    if (queueMoved == null) return;
+    const id = setTimeout(() => setQueueMoved(null), 8000);
+    return () => clearTimeout(id);
+  }, [queueMoved]);
 
   // 🆕 نغمة فريدة عندما يحدّد/يقلّص الموظف وقت الجاهزية (إنهاء مبكر) — في كل الأوضاع
   useEffect(() => {
@@ -306,6 +331,16 @@ export default function TicketView({
           </div>
         ))}
 
+      {/* شريط مؤقت: تقدّم الدور (إنهاء أو تخطّي ممن قبله) — يختفي تلقائياً */}
+      {queueMoved != null && s.status === "waiting" && (
+        <div
+          className="surface p-3 text-center font-bold text-sm"
+          style={{ background: "var(--accent)", color: "var(--accent-contrast)" }}
+        >
+          ⏫ تقدّم الدور! {queueMoved === 0 ? "أنت التالي" : `أمامك الآن ${queueMoved}`} — تحدّث وقتك المتوقع
+        </div>
+      )}
+
       <div
         className="surface p-6 text-center"
         style={
@@ -315,6 +350,11 @@ export default function TicketView({
         }
       >
         <p className="text-xl font-extrabold">{s.headline}</p>
+        {s.status === "skipped" && (
+          <p className="text-sm mt-2 muted">
+            لم تكن حاضراً عند مناداتك. تواصل مع الموظف ليُعيدك إلى الدور.
+          </p>
+        )}
       </div>
 
       {!isServing && !isDone && (
