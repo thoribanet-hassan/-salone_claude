@@ -1,7 +1,8 @@
 import { isFounder, founderMetrics } from "@/lib/founder";
 import { prisma } from "@/lib/db";
 import { PLACEMENT_LABELS } from "@/lib/announcements";
-import type { AnnouncementPlacement } from "@prisma/client";
+import ShopPicker, { type ShopOption } from "@/components/ShopPicker";
+import type { AnnouncementPlacement, MediaType } from "@prisma/client";
 import {
   founderLoginAction,
   founderLogoutAction,
@@ -47,6 +48,8 @@ interface AnnouncementItem {
   linkUrl: string | null;
   isActive: boolean;
   shopIds: string[];
+  mediaUrl: string | null;
+  mediaType: MediaType | null;
 }
 
 // نموذج إعلان واحد (جديد أو تعديل) — زر الحذف يستخدم formAction على نفس النموذج
@@ -55,7 +58,7 @@ function AnnouncementForm({
   shops,
 }: {
   a: AnnouncementItem | null;
-  shops: { id: string; name: string }[];
+  shops: ShopOption[];
 }) {
   return (
     <form action={saveAnnouncementAction} className="surface p-4 flex flex-col gap-2">
@@ -98,26 +101,34 @@ function AnnouncementForm({
         placeholder="https://… (رابط اختياري)"
         className="input-field p-2 text-xs"
       />
-      <div>
-        <p className="text-xs font-bold mb-1">
-          المنشآت المستهدفة{" "}
-          <span className="muted font-normal">(بدون تحديد = كل المنشآت)</span>
+
+      <div className="flex flex-col gap-1">
+        <p className="text-xs font-bold">
+          صورة أو فيديو <span className="muted font-normal">(اختياري — حتى 40MB)</span>
         </p>
-        <div className="input-field p-2 max-h-36 overflow-y-auto flex flex-col gap-1">
-          {shops.map((s) => (
-            <label key={s.id} className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                name="shopIds"
-                value={s.id}
-                defaultChecked={a?.shopIds.includes(s.id) ?? false}
-                className="w-4 h-4"
-              />
-              {s.name}
+        {a?.mediaUrl && (
+          <div className="flex items-center gap-3">
+            {a.mediaType === "video" ? (
+              <video src={a.mediaUrl} className="h-16 rounded" muted playsInline preload="metadata" />
+            ) : (
+              /* eslint-disable-next-line @next/next/no-img-element */
+              <img src={a.mediaUrl} alt="وسائط الإعلان" className="h-16 rounded object-cover" />
+            )}
+            <label className="flex items-center gap-2 text-xs muted">
+              <input type="checkbox" name="removeMedia" className="w-4 h-4" />
+              إزالة الوسائط الحالية
             </label>
-          ))}
-        </div>
+          </div>
+        )}
+        <input
+          name="media"
+          type="file"
+          accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm,video/quicktime"
+          className="input-field p-2 text-xs"
+        />
       </div>
+
+      <ShopPicker shops={shops} initialSelected={a?.shopIds ?? []} />
       <div className="flex gap-2">
         <button type="submit" className="btn-accent py-2 text-sm flex-1">
           {a ? "حفظ التعديلات" : "إضافة الإعلان"}
@@ -185,9 +196,24 @@ export default async function FounderPage({
 
   const [announcementRows, shopRows] = await Promise.all([
     prisma.announcement.findMany({ orderBy: { updatedAt: "desc" } }),
-    prisma.shop.findMany({ select: { id: true, name: true }, orderBy: { name: "asc" } }),
+    prisma.shop.findMany({
+      select: { id: true, name: true, facilityType: true, facilityLabel: true },
+      orderBy: { name: "asc" },
+    }),
   ]);
-  const shopOptions = shopRows.map((s) => ({ id: s.id.toString(), name: s.name }));
+  const TYPE_AR: Record<string, string> = {
+    male_barber: "حلاق رجالي",
+    female_salon: "صالون نسائي",
+    restaurant: "مطعم/كوفي",
+    clinic: "عيادة",
+    general: "عام",
+  };
+  const shopOptions: ShopOption[] = shopRows.map((s) => ({
+    id: s.id.toString(),
+    name: s.name,
+    facilityType: s.facilityType,
+    facilityLabel: s.facilityLabel || TYPE_AR[s.facilityType] || "عام",
+  }));
   const announcements = announcementRows.map((a) => ({
     id: a.id.toString(),
     placement: a.placement,
@@ -195,6 +221,8 @@ export default async function FounderPage({
     linkUrl: a.linkUrl,
     isActive: a.isActive,
     shopIds: a.shopIds.map((x) => x.toString()),
+    mediaUrl: a.mediaUrl,
+    mediaType: a.mediaType,
   }));
 
   return (

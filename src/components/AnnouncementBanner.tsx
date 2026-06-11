@@ -16,9 +16,27 @@ export default async function AnnouncementBanner({
 
   const banner = (
     <div
-      className="surface p-4 text-center text-sm font-bold"
+      className="surface p-4 text-center text-sm font-bold overflow-hidden"
       style={{ borderColor: "var(--accent)", borderWidth: "1.5px" }}
     >
+      {a.mediaUrl && a.mediaType === "image" && (
+        /* eslint-disable-next-line @next/next/no-img-element */
+        <img
+          src={a.mediaUrl}
+          alt=""
+          className="w-full max-h-56 object-cover rounded mb-3"
+        />
+      )}
+      {a.mediaUrl && a.mediaType === "video" && (
+        <video
+          src={a.mediaUrl}
+          className="w-full max-h-64 rounded mb-3"
+          controls
+          muted
+          playsInline
+          preload="metadata"
+        />
+      )}
       📢 {a.text}
       {a.linkUrl && (
         <span className="block mt-1 text-xs underline" style={{ color: "var(--accent)" }}>

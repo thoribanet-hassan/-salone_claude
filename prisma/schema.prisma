@@ -97,11 +97,19 @@ enum AnnouncementPlacement {
   serve
 }
 
+// نوع وسائط الإعلان
+enum MediaType {
+  image
+  video
+}
+
 model Announcement {
   id        BigInt                @id @default(autoincrement())
   placement AnnouncementPlacement
   text      String
   linkUrl   String?               @map("link_url")
+  mediaUrl  String?               @map("media_url") // مسار صورة/فيديو مرفوع في public/uploads
+  mediaType MediaType?            @map("media_type")
   isActive  Boolean               @default(true) @map("is_active")
   // استهداف المنشآت: مصفوفة فارغة = يُبث لكل المنشآت
   shopIds   BigInt[]              @default([]) @map("shop_ids")

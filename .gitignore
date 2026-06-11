@@ -39,3 +39,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# وسائط مرفوعة وقت التشغيل (إعلانات المؤسس)
+/public/uploads/
