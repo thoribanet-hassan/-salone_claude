@@ -55,6 +55,38 @@ enum CountdownMode {
   none // بلا تقدير زمني إطلاقاً — يتقدّم الدور بإنهاء الموظف فقط (عيادة)
 }
 
+// أنواع أحداث قياس المنتج — تُسجَّل من اليوم الأول وتُقرأ في لوحة المؤسس
+enum EventType {
+  QR_SCANNED
+  WAIT_PAGE_OPENED
+  WAIT_PAGE_REVISITED
+  TICKET_CREATED
+  TICKET_CANCELLED
+  TICKET_CALLED
+  SERVICE_STARTED
+  SERVICE_COMPLETED
+  NO_SHOW
+  APPOINTMENT_CREATED
+}
+
+// سجل أحداث القياس — append-only بلا علاقات FK عمداً:
+// تبقى بيانات القياس حتى لو حُذفت المنشأة أو التذكرة
+model Event {
+  id        BigInt    @id @default(autoincrement())
+  type      EventType
+  shopId    BigInt?   @map("shop_id")
+  ticketId  BigInt?   @map("ticket_id")
+  visitorId String?   @map("visitor_id") // كوكي الزائر المجهول — لقياس العودة والتسرّب
+  source    String? // مصدر الدخول من رابط/QR: in_store, whatsapp, instagram…
+  meta      Json?
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  @@index([type, createdAt])
+  @@index([shopId, createdAt])
+  @@index([ticketId])
+  @@map("events")
+}
+
 model Shop {
   id           BigInt       @id @default(autoincrement())
   name         String
@@ -142,6 +174,7 @@ model Ticket {
   position     Int?
   scheduledAt  DateTime?    @map("scheduled_at") // موعد محدّد اختاره الزبون (null = دخول الآن)
   readyAt      DateTime?    @map("ready_at") // وقت الجاهزية الذي يحدّده المدير (الوضع اليدوي)
+  source       String? // مصدر دخول الزبون وقت الحجز (من ?source= على رابط/QR)
   createdAt    DateTime     @default(now()) @map("created_at")
   startedAt    DateTime?    @map("started_at")
   completedAt  DateTime?    @map("completed_at")

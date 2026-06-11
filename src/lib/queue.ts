@@ -1,5 +1,6 @@
 import { Prisma, type Ticket } from "@prisma/client";
 import { prisma } from "./db";
+import { logEvent } from "./events";
 
 // تاريخ الخدمة بتوقيت المحل (لا بتوقيت الخادم) — أساس التصفير اليومي
 export function serviceDateFor(timezone: string): Date {
@@ -53,6 +54,7 @@ export interface CreateTicketInput {
   customerPhone?: string | null;
   timezone: string;
   scheduledAt?: Date | null; // موعد محدّد (null = الآن)
+  source?: string | null; // مصدر دخول الزبون (من ?source=)
 }
 
 // يحسب مدة الخدمة المختارة بالدقائق وقت الحجز (لقطة est_duration)
@@ -129,6 +131,7 @@ export async function createTicket(input: CreateTicketInput): Promise<Ticket> {
         estDuration,
         totalPrice,
         scheduledAt: input.scheduledAt ?? null,
+        source: input.source ?? null,
         status: "waiting",
       },
     });
@@ -177,6 +180,16 @@ export async function completeService(barberId: bigint): Promise<boolean> {
     }),
     prisma.user.update({ where: { id: barberId }, data: { status: "available" } }),
   ]);
+  void logEvent("SERVICE_COMPLETED", {
+    shopId: current.shopId,
+    ticketId: current.id,
+    source: current.source,
+    meta: {
+      serviceMinutes: current.startedAt
+        ? Math.round((Date.now() - current.startedAt.getTime()) / 60_000)
+        : null,
+    },
+  });
   return true;
 }
 
@@ -193,6 +206,11 @@ export async function skipCurrent(barberId: bigint): Promise<boolean> {
     }),
     prisma.user.update({ where: { id: barberId }, data: { status: "available" } }),
   ]);
+  void logEvent("NO_SHOW", {
+    shopId: current.shopId,
+    ticketId: current.id,
+    source: current.source,
+  });
   return true;
 }
 
@@ -202,10 +220,28 @@ export async function cleanupQueues(): Promise<{ abandoned: number; staleServing
   const waitingTtl = new Date(now.getTime() - 4 * 60 * 60 * 1000); // 4 ساعات
   const servingTtl = new Date(now.getTime() - 6 * 60 * 60 * 1000); // 6 ساعات
 
+  // نلتقط هويات التذاكر قبل الإلغاء الجماعي حتى نسجّل حدثاً لكل واحدة
+  const toCancel = await prisma.ticket.findMany({
+    where: { status: "waiting", createdAt: { lt: waitingTtl } },
+    select: { id: true, shopId: true, source: true },
+  });
   const abandoned = await prisma.ticket.updateMany({
     where: { status: "waiting", createdAt: { lt: waitingTtl } },
     data: { status: "cancelled", cancelledAt: now },
   });
+  if (toCancel.length > 0) {
+    await prisma.event
+      .createMany({
+        data: toCancel.map((t) => ({
+          type: "TICKET_CANCELLED" as const,
+          shopId: t.shopId,
+          ticketId: t.id,
+          source: t.source,
+          meta: { reason: "abandoned_ttl" },
+        })),
+      })
+      .catch((err) => console.error("event log failed: TICKET_CANCELLED bulk", err));
+  }
   // خدمة بدأت ولم تُنهَ منذ مدة طويلة → تُغلق ويُحرَّر مزوّدها لاحقاً
   const staleServing = await prisma.ticket.updateMany({
     where: { status: "serving", startedAt: { lt: servingTtl } },
@@ -267,7 +303,7 @@ export async function callNextCustomer(barberId: bigint): Promise<NextResult> {
   if (barber.status !== "available")
     return { ok: false, reason: "غيّر حالتك إلى متاح أولاً" };
 
-  return prisma.$transaction(async (tx) => {
+  const result = await prisma.$transaction(async (tx) => {
     // أولوية: التذاكر المسندة لهذا الحلاق ثم أقدم تذكرة في الـ pool المشترك
     const rows = await tx.$queryRaw<{ id: bigint }[]>(Prisma.sql`
       SELECT id FROM tickets
@@ -290,4 +326,20 @@ export async function callNextCustomer(barberId: bigint): Promise<NextResult> {
     await tx.user.update({ where: { id: barberId }, data: { status: "busy" } });
     return { ok: true, ticket } as NextResult;
   });
+
+  if (result.ok) {
+    // في هذا النموذج: الاستدعاء وبدء الخدمة لحظة واحدة — نسجّل الحدثين معاً
+    void logEvent("TICKET_CALLED", {
+      shopId: barber.shopId,
+      ticketId: result.ticket.id,
+      source: result.ticket.source,
+      meta: { barber: barber.name },
+    });
+    void logEvent("SERVICE_STARTED", {
+      shopId: barber.shopId,
+      ticketId: result.ticket.id,
+      source: result.ticket.source,
+    });
+  }
+  return result;
 }

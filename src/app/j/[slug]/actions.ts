@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/db";
 import { createTicket, scheduledAtFromLocal } from "@/lib/queue";
+import { logEvent, visitorIdFrom, sourceFrom } from "@/lib/events";
 
 export interface BookingState {
   error?: string;
@@ -66,6 +67,9 @@ export async function createBookingAction(
       return { error: "اختر وقتاً قادماً (ليس وقتاً مضى)" };
   }
 
+  const visitorId = await visitorIdFrom();
+  const source = await sourceFrom();
+
   const ticket = await createTicket({
     shopId: shop.id,
     barberId,
@@ -74,7 +78,31 @@ export async function createBookingAction(
     customerPhone: phoneRaw || null,
     timezone: shop.timezone,
     scheduledAt,
+    source,
   });
+
+  // قياس: إنشاء دور (+ موعد إن حُدّد وقت)
+  void logEvent("TICKET_CREATED", {
+    shopId: shop.id,
+    ticketId: ticket.id,
+    visitorId,
+    source,
+    meta: {
+      barberChosen: !!barberId,
+      servicesCount: validServices.length,
+      scheduled: !!scheduledAt,
+      estDuration: ticket.estDuration,
+      totalPrice: ticket.totalPrice,
+    },
+  });
+  if (scheduledAt) {
+    void logEvent("APPOINTMENT_CREATED", {
+      shopId: shop.id,
+      ticketId: ticket.id,
+      visitorId,
+      source,
+    });
+  }
 
   // ربط التذكرة بالجهاز لاستعادتها لاحقاً
   const jar = await cookies();

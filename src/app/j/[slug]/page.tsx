@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/db";
 import { themeFor } from "@/lib/theme";
+import { logEvent, visitorIdFrom, sanitizeSource, sourceFrom } from "@/lib/events";
 import BookingForm from "./BookingForm";
 
 // لا تخزين مؤقت — تظهر الخدمات/الحالة المحدّثة فوراً للزبون
@@ -9,10 +10,13 @@ export const dynamic = "force-dynamic";
 
 export default async function JoinPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ source?: string }>;
 }) {
   const { slug } = await params;
+  const sp = await searchParams;
 
   const shop = await prisma.shop.findUnique({
     where: { slug },
@@ -31,6 +35,13 @@ export default async function JoinPage({
   });
 
   if (!shop) notFound();
+
+  // قياس: فتح صفحة الحجز (مسح QR أو رابط مباشر)
+  void logEvent("QR_SCANNED", {
+    shopId: shop.id,
+    visitorId: await visitorIdFrom(),
+    source: sanitizeSource(sp.source) ?? (await sourceFrom()),
+  });
 
   // استرجاع تلقائي: إن كان للزبون دور نشط محفوظ في الكوكي، نعرض له رابط متابعته فوراً
   const lastToken = (await cookies()).get("last_ticket")?.value;
