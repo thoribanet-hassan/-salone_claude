@@ -2,6 +2,20 @@ import { Prisma, type Ticket } from "@prisma/client";
 import { prisma } from "./db";
 import { logEvent } from "./events";
 
+// نافذة حماية الموعد: خلال هذه الدقائق قبل الموعد يُثبَّت صاحبه في مقدمة الطابور،
+// فلا يتقدّمه أي حجز فوري (walk-in) يأتي بعد بدء النافذة، ولا يُنادى موعدٌ قبل بدئها.
+export const APPOINTMENT_GRACE_MINUTES = 15;
+const APPOINTMENT_GRACE_MS = APPOINTMENT_GRACE_MINUTES * 60 * 1000;
+
+// مفتاح ترتيب الطابور الموحّد:
+// - الحجز الفوري: لحظة المسح (created_at)
+// - الموعد المحجوز: بداية نافذة حمايته (الموعد − النافذة) — فمن مسح قبل النافذة يحترم،
+//   ومن مسح بعد بدئها لا يتقدّم الموعد. يطابق منطق SQL في callNextCustomer تماماً.
+export function queueSortKeyMs(t: { scheduledAt: Date | null; createdAt: Date }): number {
+  if (t.scheduledAt) return t.scheduledAt.getTime() - APPOINTMENT_GRACE_MS;
+  return t.createdAt.getTime();
+}
+
 // تاريخ الخدمة بتوقيت المحل (لا بتوقيت الخادم) — أساس التصفير اليومي
 export function serviceDateFor(timezone: string): Date {
   const ymd = new Intl.DateTimeFormat("en-CA", {
@@ -147,8 +161,8 @@ export interface QueueInfo {
 export async function queueInfoFor(ticket: Ticket): Promise<QueueInfo> {
   if (ticket.status !== "waiting") return { peopleAhead: 0, remainingMinutes: 0 };
 
-  // الوقت الفعّال لترتيب الطابور = الموعد المحدّد أو وقت الإنشاء
-  const myEff = (ticket.scheduledAt ?? ticket.createdAt).getTime();
+  // مفتاح ترتيب هذا الزبون (يراعي نافذة حماية الموعد)
+  const myKey = queueSortKeyMs(ticket);
 
   // نجلب التذاكر المنتظرة لنفس المسار (حلاق محدد أو pool) ونحسب الترتيب في JS (يتفادى التباس المناطق الزمنية)
   const candidates = await prisma.ticket.findMany({
@@ -161,7 +175,7 @@ export async function queueInfoFor(ticket: Ticket): Promise<QueueInfo> {
   });
 
   const ahead = candidates.filter(
-    (t) => t.id !== ticket.id && (t.scheduledAt ?? t.createdAt).getTime() < myEff
+    (t) => t.id !== ticket.id && queueSortKeyMs(t) < myKey
   );
   const remainingMinutes = ahead.reduce((s, t) => s + t.estDuration, 0);
   return { peopleAhead: ahead.length, remainingMinutes };
@@ -304,15 +318,25 @@ export async function callNextCustomer(barberId: bigint): Promise<NextResult> {
     return { ok: false, reason: "غيّر حالتك إلى متاح أولاً" };
 
   const result = await prisma.$transaction(async (tx) => {
-    // أولوية: التذاكر المسندة لهذا الحلاق ثم أقدم تذكرة في الـ pool المشترك
+    // أولوية: التذاكر المسندة لهذا الحلاق ثم أقدم تذكرة في الـ pool المشترك.
+    // الترتيب بمفتاح موحّد: الموعد يُرتّب من بداية نافذة حمايته (الموعد − النافذة).
+    // ويُستثنى الموعد الذي لم تبدأ نافذته بعد (لا يُسحب قبل أوانه ولو كان وحده).
+    // المقارنة بـ (NOW() AT TIME ZONE 'UTC') لمطابقة تخزين Prisma بلا منطقة زمنية.
+    const grace = APPOINTMENT_GRACE_MINUTES;
     const rows = await tx.$queryRaw<{ id: bigint }[]>(Prisma.sql`
       SELECT id FROM tickets
       WHERE shop_id = ${barber.shopId}
         AND status = 'waiting'
         AND (barber_id = ${barberId} OR barber_id IS NULL)
+        AND (
+          scheduled_at IS NULL
+          OR scheduled_at <= (NOW() AT TIME ZONE 'UTC') + make_interval(mins => ${grace})
+        )
       ORDER BY COALESCE(position, 999999) ASC,
                (barber_id = ${barberId}) DESC,
-               COALESCE(scheduled_at, created_at) ASC
+               (CASE WHEN scheduled_at IS NOT NULL
+                     THEN scheduled_at - make_interval(mins => ${grace})
+                     ELSE created_at END) ASC
       LIMIT 1
       FOR UPDATE SKIP LOCKED;
     `);
