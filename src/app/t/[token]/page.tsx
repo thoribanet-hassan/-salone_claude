@@ -37,7 +37,7 @@ export default async function TicketPage({
 
   return (
     <main className={`${state.theme} min-h-screen flex flex-col items-center px-5 py-8`}>
-      <AnnouncementBanner page="ticket" className="w-full max-w-md mb-4" />
+      <AnnouncementBanner page="ticket" shopId={t?.shopId} className="w-full max-w-md mb-4" />
       <TicketView token={token} initial={state} />
     </main>
   );

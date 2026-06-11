@@ -6,6 +6,7 @@ import {
   founderLoginAction,
   founderLogoutAction,
   saveAnnouncementAction,
+  deleteAnnouncementAction,
 } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -36,6 +37,102 @@ function Section({ title, children }: { title: string; children: React.ReactNode
       <h2 className="text-lg font-extrabold">{title}</h2>
       {children}
     </section>
+  );
+}
+
+interface AnnouncementItem {
+  id: string;
+  placement: AnnouncementPlacement;
+  text: string;
+  linkUrl: string | null;
+  isActive: boolean;
+  shopIds: string[];
+}
+
+// نموذج إعلان واحد (جديد أو تعديل) — زر الحذف يستخدم formAction على نفس النموذج
+function AnnouncementForm({
+  a,
+  shops,
+}: {
+  a: AnnouncementItem | null;
+  shops: { id: string; name: string }[];
+}) {
+  return (
+    <form action={saveAnnouncementAction} className="surface p-4 flex flex-col gap-2">
+      {a && <input type="hidden" name="id" value={a.id} />}
+      <div className="flex items-center gap-3">
+        <select
+          name="placement"
+          defaultValue={a?.placement ?? "all"}
+          className="input-field p-2 text-sm flex-1"
+        >
+          {(Object.keys(PLACEMENT_LABELS) as AnnouncementPlacement[]).map((p) => (
+            <option key={p} value={p}>
+              {PLACEMENT_LABELS[p]}
+            </option>
+          ))}
+        </select>
+        <label className="flex items-center gap-2 text-xs muted shrink-0">
+          <input
+            type="checkbox"
+            name="isActive"
+            defaultChecked={a ? a.isActive : true}
+            className="w-4 h-4"
+          />
+          فعّال
+        </label>
+      </div>
+      <textarea
+        name="text"
+        rows={2}
+        required
+        defaultValue={a?.text ?? ""}
+        placeholder="نص الإعلان…"
+        className="input-field p-3 text-sm"
+      />
+      <input
+        name="linkUrl"
+        type="url"
+        dir="ltr"
+        defaultValue={a?.linkUrl ?? ""}
+        placeholder="https://… (رابط اختياري)"
+        className="input-field p-2 text-xs"
+      />
+      <div>
+        <p className="text-xs font-bold mb-1">
+          المنشآت المستهدفة{" "}
+          <span className="muted font-normal">(بدون تحديد = كل المنشآت)</span>
+        </p>
+        <div className="input-field p-2 max-h-36 overflow-y-auto flex flex-col gap-1">
+          {shops.map((s) => (
+            <label key={s.id} className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                name="shopIds"
+                value={s.id}
+                defaultChecked={a?.shopIds.includes(s.id) ?? false}
+                className="w-4 h-4"
+              />
+              {s.name}
+            </label>
+          ))}
+        </div>
+      </div>
+      <div className="flex gap-2">
+        <button type="submit" className="btn-accent py-2 text-sm flex-1">
+          {a ? "حفظ التعديلات" : "إضافة الإعلان"}
+        </button>
+        {a && (
+          <button
+            formAction={deleteAnnouncementAction}
+            className="surface px-4 py-2 text-sm font-bold"
+            style={{ color: "#dc2626" }}
+          >
+            حذف
+          </button>
+        )}
+      </div>
+    </form>
   );
 }
 
@@ -86,9 +183,19 @@ export default async function FounderPage({
   const conv = m.conversionRate7d;
   const vc = m.visitorConversion7d;
 
-  const announcements = await prisma.announcement.findMany();
-  const annByPlacement = new Map(announcements.map((a) => [a.placement, a]));
-  const placements = Object.keys(PLACEMENT_LABELS) as AnnouncementPlacement[];
+  const [announcementRows, shopRows] = await Promise.all([
+    prisma.announcement.findMany({ orderBy: { updatedAt: "desc" } }),
+    prisma.shop.findMany({ select: { id: true, name: true }, orderBy: { name: "asc" } }),
+  ]);
+  const shopOptions = shopRows.map((s) => ({ id: s.id.toString(), name: s.name }));
+  const announcements = announcementRows.map((a) => ({
+    id: a.id.toString(),
+    placement: a.placement,
+    text: a.text,
+    linkUrl: a.linkUrl,
+    isActive: a.isActive,
+    shopIds: a.shopIds.map((x) => x.toString()),
+  }));
 
   return (
     <main className="theme-general min-h-screen flex flex-col items-center px-5 py-8">
@@ -241,50 +348,19 @@ export default async function FounderPage({
         <div id="announcements">
           <Section title="الإعلانات">
             <p className="muted text-sm -mt-2">
-              الإعلان المخصص لصفحةٍ ما يَغلب الإعلان العام عليها. نص فارغ + حفظ = حذف الإعلان.
+              الإعلان المخصص لصفحةٍ ما يَغلب الإعلان العام، والمستهدِف لمنشآت محددة يَغلب
+              المبثوث للكل. بدون تحديد منشآت = يُبث لكل المنشآت.
             </p>
-            {placements.map((p) => {
-              const a = annByPlacement.get(p);
-              return (
-                <form
-                  key={p}
-                  action={saveAnnouncementAction}
-                  className="surface p-4 flex flex-col gap-2"
-                >
-                  <input type="hidden" name="placement" value={p} />
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-sm">{PLACEMENT_LABELS[p]}</span>
-                    <label className="flex items-center gap-2 text-xs muted">
-                      <input
-                        type="checkbox"
-                        name="isActive"
-                        defaultChecked={a ? a.isActive : true}
-                        className="w-4 h-4"
-                      />
-                      فعّال
-                    </label>
-                  </div>
-                  <textarea
-                    name="text"
-                    rows={2}
-                    defaultValue={a?.text ?? ""}
-                    placeholder="نص الإعلان…"
-                    className="input-field p-3 text-sm"
-                  />
-                  <input
-                    name="linkUrl"
-                    type="url"
-                    dir="ltr"
-                    defaultValue={a?.linkUrl ?? ""}
-                    placeholder="https://… (رابط اختياري)"
-                    className="input-field p-2 text-xs"
-                  />
-                  <button type="submit" className="btn-accent py-2 text-sm">
-                    حفظ
-                  </button>
-                </form>
-              );
-            })}
+
+            <p className="font-bold text-sm">➕ إعلان جديد</p>
+            <AnnouncementForm a={null} shops={shopOptions} />
+
+            {announcements.length > 0 && (
+              <p className="font-bold text-sm mt-2">الإعلانات الحالية ({announcements.length})</p>
+            )}
+            {announcements.map((a) => (
+              <AnnouncementForm key={a.id} a={a} shops={shopOptions} />
+            ))}
           </Section>
         </div>
 

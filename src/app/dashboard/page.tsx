@@ -90,7 +90,7 @@ export default async function DashboardPage() {
           </div>
         </header>
 
-        <AnnouncementBanner page="dashboard" />
+        <AnnouncementBanner page="dashboard" shopId={shopId} />
 
         {/* خدمة العملاء (المدير حلاق أيضاً) */}
         {manager && (

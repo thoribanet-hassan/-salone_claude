@@ -24,7 +24,8 @@ export async function founderLogoutAction(): Promise<void> {
   redirect("/founder");
 }
 
-// حفظ/تحديث إعلان موضعٍ ما — صلاحية المؤسس حصراً؛ نص فارغ = حذف الإعلان
+// حفظ إعلان (جديد أو تعديل) — صلاحية المؤسس حصراً
+// الاستهداف: shopIds المختارة؛ بدون اختيار = بث لكل المنشآت
 export async function saveAnnouncementAction(formData: FormData): Promise<void> {
   if (!(await isFounder())) redirect("/founder");
 
@@ -36,15 +37,33 @@ export async function saveAnnouncementAction(formData: FormData): Promise<void> 
   const linkRaw = String(formData.get("linkUrl") ?? "").trim();
   const linkUrl = /^https?:\/\/\S+$/.test(linkRaw) ? linkRaw : null;
   const isActive = formData.get("isActive") === "on";
+  const shopIds = formData
+    .getAll("shopIds")
+    .map((v) => String(v))
+    .filter((v) => /^\d+$/.test(v))
+    .map((v) => BigInt(v));
+  const idRaw = String(formData.get("id") ?? "");
 
-  if (!text) {
-    await prisma.announcement.deleteMany({ where: { placement } });
-  } else {
-    await prisma.announcement.upsert({
-      where: { placement },
-      create: { placement, text, linkUrl, isActive },
-      update: { text, linkUrl, isActive },
+  if (!text) redirect("/founder#announcements");
+
+  if (/^\d+$/.test(idRaw)) {
+    await prisma.announcement.update({
+      where: { id: BigInt(idRaw) },
+      data: { placement, text, linkUrl, isActive, shopIds },
     });
+  } else {
+    await prisma.announcement.create({
+      data: { placement, text, linkUrl, isActive, shopIds },
+    });
+  }
+  redirect("/founder#announcements");
+}
+
+export async function deleteAnnouncementAction(formData: FormData): Promise<void> {
+  if (!(await isFounder())) redirect("/founder");
+  const idRaw = String(formData.get("id") ?? "");
+  if (/^\d+$/.test(idRaw)) {
+    await prisma.announcement.deleteMany({ where: { id: BigInt(idRaw) } });
   }
   redirect("/founder#announcements");
 }

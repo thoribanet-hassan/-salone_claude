@@ -99,13 +99,16 @@ enum AnnouncementPlacement {
 
 model Announcement {
   id        BigInt                @id @default(autoincrement())
-  placement AnnouncementPlacement @unique // صف واحد لكل موضع
+  placement AnnouncementPlacement
   text      String
   linkUrl   String?               @map("link_url")
   isActive  Boolean               @default(true) @map("is_active")
+  // استهداف المنشآت: مصفوفة فارغة = يُبث لكل المنشآت
+  shopIds   BigInt[]              @default([]) @map("shop_ids")
   createdAt DateTime              @default(now()) @map("created_at")
   updatedAt DateTime              @updatedAt @map("updated_at")
 
+  @@index([isActive, placement])
   @@map("announcements")
 }
 

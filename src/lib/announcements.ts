@@ -13,14 +13,33 @@ export const PLACEMENT_LABELS: Record<AnnouncementPlacement, string> = {
   serve: "شاشة الموظف",
 };
 
-// إعلان الصفحة: المخصص للموضع يغلب الإعلان العام
-export async function announcementFor(page: PagePlacement): Promise<Announcement | null> {
+// إعلان الصفحة لمنشأة معيّنة — الأكثر تخصيصاً يفوز:
+// (صفحة محددة + منشآت محددة) > (صفحة محددة لكل المنشآت) > (عام + منشآت محددة) > (عام للكل)
+// الصفحات بلا سياق منشأة (الرئيسية) تعرض الإعلانات المبثوثة للكل فقط
+export async function announcementFor(
+  page: PagePlacement,
+  shopId?: bigint | null
+): Promise<Announcement | null> {
   const rows = await prisma.announcement.findMany({
-    where: { isActive: true, placement: { in: [page, "all"] } },
+    where: {
+      isActive: true,
+      placement: { in: [page, "all"] },
+      OR: [
+        { shopIds: { isEmpty: true } },
+        ...(shopId != null ? [{ shopIds: { has: shopId } }] : []),
+      ],
+    },
+    orderBy: { updatedAt: "desc" },
   });
-  return (
-    rows.find((r) => r.placement === page) ??
-    rows.find((r) => r.placement === "all") ??
-    null
-  );
+
+  let best: Announcement | null = null;
+  let bestScore = -1;
+  for (const r of rows) {
+    const score = (r.placement === page ? 2 : 0) + (r.shopIds.length > 0 ? 1 : 0);
+    if (score > bestScore) {
+      best = r;
+      bestScore = score;
+    }
+  }
+  return best;
 }

@@ -1,14 +1,17 @@
 import { announcementFor, type PagePlacement } from "@/lib/announcements";
 
 // شريط إعلان المؤسس — يظهر فقط إن وُجد إعلان فعّال لهذه الصفحة (أو إعلان عام)
+// shopId يحدد أي إعلانات المنشآت المستهدفة تنطبق هنا (بدونه: المبثوث للكل فقط)
 export default async function AnnouncementBanner({
   page,
+  shopId,
   className,
 }: {
   page: PagePlacement;
+  shopId?: bigint | null;
   className?: string;
 }) {
-  const a = await announcementFor(page);
+  const a = await announcementFor(page, shopId);
   if (!a || !a.text.trim()) return null;
 
   const banner = (

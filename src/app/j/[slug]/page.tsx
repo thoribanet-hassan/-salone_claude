@@ -74,7 +74,7 @@ export default async function JoinPage({
           <h1 className="text-3xl font-extrabold">{shop.name}</h1>
         </header>
 
-        <AnnouncementBanner page="join" />
+        <AnnouncementBanner page="join" shopId={shop.id} />
 
         {activeTicket && (
           <a
