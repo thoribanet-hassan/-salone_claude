@@ -14,6 +14,7 @@ export interface TicketState {
   remainingSeconds: number; // بذرة العدّاد التنازلي الحي
   countdownActive: boolean; // هل العدّاد فعّال؟ (في الوضع اليدوي لا يبدأ إلا بإطلاق المدير)
   readyAtMs: number | null; // وقت الجاهزية الذي حدّده الموظف (لكشف التغيّر وتشغيل النغمة)
+  scheduledAtMs: number | null; // وقت الموعد المحجوز — لكبح مراحل الاستعجال قبل حلوله
   serviceName: string | null;
   totalPrice: number;
   showPrices: boolean;
@@ -127,6 +128,7 @@ export async function getTicketState(token: string): Promise<TicketState | null>
     remainingSeconds,
     countdownActive,
     readyAtMs: ticket.readyAt ? ticket.readyAt.getTime() : null,
+    scheduledAtMs: ticket.scheduledAt ? ticket.scheduledAt.getTime() : null,
     serviceName: ticket.serviceLabel ?? ticket.service?.name ?? null,
     totalPrice: ticket.totalPrice,
     showPrices: !!ticket.shop.settings?.showPrices,

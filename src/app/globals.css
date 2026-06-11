@@ -104,6 +104,70 @@ body {
   outline-offset: 1px;
 }
 
+/* ====== مراحل القرب في صفحة الانتظار (بعيد → اقترب → استعد → أنت التالي) ====== */
+:root {
+  --stage-warm: #f59e0b; /* اقترب */
+  --stage-hot: #f97316; /* استعد */
+}
+.stage-card {
+  transition:
+    border-color 0.6s ease,
+    box-shadow 0.6s ease,
+    background 0.6s ease;
+}
+.stage-num {
+  display: inline-block;
+  transition: transform 0.7s ease;
+}
+.stage-num-ready {
+  transform: scale(1.1);
+}
+.stage-num-next {
+  transform: scale(1.2);
+}
+.stage-approaching {
+  border-color: var(--stage-warm);
+  box-shadow: 0 0 0 1px var(--stage-warm), 0 0 18px -6px var(--stage-warm);
+}
+.stage-ready {
+  border-color: var(--stage-hot);
+  animation: stage-pulse-soft 2.2s ease-in-out infinite;
+}
+.stage-next {
+  border-color: var(--accent);
+  animation: stage-pulse-strong 1.5s ease-in-out infinite;
+}
+@keyframes stage-pulse-soft {
+  0%,
+  100% {
+    box-shadow: 0 0 0 1px var(--stage-hot), 0 0 10px -4px var(--stage-hot);
+  }
+  50% {
+    box-shadow: 0 0 0 2px var(--stage-hot), 0 0 26px -4px var(--stage-hot);
+  }
+}
+@keyframes stage-pulse-strong {
+  0%,
+  100% {
+    box-shadow: 0 0 0 2px var(--accent), 0 0 14px -2px var(--accent);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 0 3px var(--accent), 0 0 34px -2px var(--accent);
+    transform: scale(1.015);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .stage-ready,
+  .stage-next {
+    animation: none;
+  }
+  .stage-card,
+  .stage-num {
+    transition: none;
+  }
+}
+
 /* ====== الطباعة: يُطبع QR فقط (منطقة qr-print-area) دون بقية الصفحة ====== */
 @media print {
   body,

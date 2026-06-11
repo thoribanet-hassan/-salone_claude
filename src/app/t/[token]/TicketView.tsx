@@ -21,6 +21,7 @@ interface State {
   remainingSeconds: number;
   countdownActive: boolean;
   readyAtMs: number | null;
+  scheduledAtMs: number | null;
   serviceName: string | null;
   totalPrice: number;
   showPrices: boolean;
@@ -42,6 +43,56 @@ function fmt(totalSeconds: number): string {
   const m = Math.floor(totalSeconds / 60);
   const s = totalSeconds % 60;
   return `${m}:${String(s).padStart(2, "0")}`;
+}
+
+// مراحل القرب: تتدرّج البطاقة لوناً وحركةً ورسالةً كلما اقترب الدور
+// بعيد = 4+ | اقترب = 2-3 | استعد = 1 | أنت التالي = 0 | حان دورك = serving
+type Stage = "far" | "approaching" | "ready" | "next" | "serving";
+
+function stageFor(s: State): Stage | null {
+  if (s.status === "serving") return "serving";
+  if (s.status !== "waiting") return null;
+  // صاحب موعد لم يحن وقته: لا استعجال مهما كان ترتيبه في الطابور
+  if (s.scheduledAtMs != null && s.scheduledAtMs > Date.now() && s.readyAtMs == null) {
+    return "far";
+  }
+  if (s.peopleAhead === 0) return "next";
+  if (s.peopleAhead === 1) return "ready";
+  if (s.peopleAhead <= 3) return "approaching";
+  return "far";
+}
+
+const STAGE_CARD: Record<Stage, string> = {
+  far: "",
+  approaching: "stage-approaching",
+  ready: "stage-ready",
+  next: "stage-next",
+  serving: "",
+};
+
+const STAGE_NUM: Record<Stage, string> = {
+  far: "",
+  approaching: "",
+  ready: "stage-num-ready",
+  next: "stage-num-next",
+  serving: "stage-num-next",
+};
+
+function stageMessage(stage: Stage, s: State): string {
+  switch (stage) {
+    case "far":
+      return "يمكنك متابعة أعمالك بحرّية — سننبهك هنا عند اقتراب دورك ✨";
+    case "approaching":
+      return "اقترب دورك، يرجى الاستعداد";
+    case "ready":
+      return s.settings.showPeopleAhead
+        ? "بقي شخص واحد أمامك — كن قريباً 🔔"
+        : "دورك قريب جداً — كن قريباً 🔔";
+    case "next":
+      return "أنت التالي! يرجى التواجد قرب نقطة الخدمة 🎉";
+    default:
+      return s.headline;
+  }
 }
 
 export default function TicketView({
@@ -271,6 +322,19 @@ export default function TicketView({
   const showCountdown = s.settings.showCountdown && s.countdownActive && !isServing && !isDone;
   const waitingNoTimer = isWaiting && !s.countdownActive;
 
+  // مرحلة القرب الحالية وما يقابلها من تنسيق ورسالة
+  const stage = stageFor(s);
+  const stageCardCls = stage ? STAGE_CARD[stage] : "";
+  const stageNumCls = stage ? STAGE_NUM[stage] : "";
+  // موعد محجوز لم يحن وقته: رسالة الموعد من الخادم تبقى هي الأساس
+  const futureAppointment =
+    isWaiting &&
+    s.scheduledAtMs != null &&
+    s.scheduledAtMs > Date.now() &&
+    s.readyAtMs == null;
+  const statusMsg =
+    isWaiting && stage && !futureAppointment ? stageMessage(stage, s) : s.headline;
+
   return (
     <div className="w-full max-w-md flex flex-col gap-6">
       {!online && (
@@ -296,9 +360,12 @@ export default function TicketView({
         </button>
       )}
 
-      <div className="surface p-7 text-center flex flex-col items-center gap-2">
+      <div className={`surface p-7 text-center flex flex-col items-center gap-2 stage-card ${stageCardCls}`}>
         <p className="muted text-sm">رقم تذكرتك</p>
-        <p className="text-7xl font-extrabold" style={{ color: "var(--accent)" }}>
+        <p
+          className={`text-7xl font-extrabold stage-num ${stageNumCls}`}
+          style={{ color: "var(--accent)" }}
+        >
           {s.ticketNumber}
         </p>
         <p className="font-bold mt-1">{s.customerName}</p>
@@ -319,7 +386,9 @@ export default function TicketView({
       {showCountdown &&
         (secondsLeft <= 0 ? (
           <div className="surface p-7 text-center" style={{ background: "var(--accent)", color: "var(--accent-contrast)" }}>
-            <p className="text-3xl font-extrabold">أنت التالي — تجهّز 🎉</p>
+            <p className="text-3xl font-extrabold">
+              {s.peopleAhead === 0 ? "أنت التالي — تجهّز 🎉" : "انتهى الوقت التقديري — ابقَ قريباً"}
+            </p>
           </div>
         ) : (
           <div className="surface p-7 text-center flex flex-col items-center gap-1">
@@ -342,14 +411,22 @@ export default function TicketView({
       )}
 
       <div
-        className="surface p-6 text-center"
+        className={`surface p-6 text-center stage-card ${isServing ? "" : stageCardCls}`}
         style={
           isServing
             ? { background: "var(--accent)", color: "var(--accent-contrast)" }
             : undefined
         }
       >
-        <p className="text-xl font-extrabold">{s.headline}</p>
+        <p className="text-xl font-extrabold">{statusMsg}</p>
+        {futureAppointment && (
+          <p className="text-sm mt-2 muted">
+            يمكنك متابعة أعمالك — هذه الصفحة ستنبهك عند اقتراب موعدك
+          </p>
+        )}
+        {waitingNoTimer && !futureAppointment && (
+          <p className="text-sm mt-2 muted">{s.headline}</p>
+        )}
         {s.status === "skipped" && (
           <p className="text-sm mt-2 muted">
             لم تكن حاضراً عند مناداتك. تواصل مع الموظف ليُعيدك إلى الدور.
