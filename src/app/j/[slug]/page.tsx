@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { prisma } from "@/lib/db";
 import { themeFor } from "@/lib/theme";
 import { logEvent, visitorIdFrom, sanitizeSource, sourceFrom } from "@/lib/events";
+import AnnouncementBanner from "@/components/AnnouncementBanner";
 import BookingForm from "./BookingForm";
 
 // لا تخزين مؤقت — تظهر الخدمات/الحالة المحدّثة فوراً للزبون
@@ -72,6 +73,8 @@ export default async function JoinPage({
           <p className="muted text-sm mb-1">{shop.facilityLabel || theme.label}</p>
           <h1 className="text-3xl font-extrabold">{shop.name}</h1>
         </header>
+
+        <AnnouncementBanner page="join" />
 
         {activeTicket && (
           <a

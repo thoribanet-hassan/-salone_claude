@@ -6,6 +6,7 @@ import { joinUrlFor } from "@/lib/url";
 import { serviceDateFor } from "@/lib/queue";
 import ServeView from "../serve/ServeView";
 import QrActions from "../q/[slug]/QrActions";
+import AnnouncementBanner from "@/components/AnnouncementBanner";
 import {
   addBarberAction,
   setTasksAction,
@@ -88,6 +89,8 @@ export default async function DashboardPage() {
             <a href="/api/logout" className="surface px-3 py-2 font-bold no-underline">خروج</a>
           </div>
         </header>
+
+        <AnnouncementBanner page="dashboard" />
 
         {/* خدمة العملاء (المدير حلاق أيضاً) */}
         {manager && (

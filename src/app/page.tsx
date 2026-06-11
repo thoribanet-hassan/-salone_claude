@@ -1,9 +1,14 @@
 import Link from "next/link";
+import AnnouncementBanner from "@/components/AnnouncementBanner";
+
+// ديناميكية حتى يظهر إعلان المؤسس فور تغييره
+export const dynamic = "force-dynamic";
 
 export default function Home() {
   return (
     <main className="theme-general min-h-screen flex flex-col items-center justify-center px-6 py-10 text-center">
       <div className="w-full max-w-md flex flex-col gap-6">
+        <AnnouncementBanner page="home" />
         <div>
           <h1 className="text-5xl font-extrabold" style={{ color: "var(--accent)" }}>
             دورك

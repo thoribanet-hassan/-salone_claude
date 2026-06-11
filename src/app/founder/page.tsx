@@ -1,5 +1,12 @@
 import { isFounder, founderMetrics } from "@/lib/founder";
-import { founderLoginAction, founderLogoutAction } from "./actions";
+import { prisma } from "@/lib/db";
+import { PLACEMENT_LABELS } from "@/lib/announcements";
+import type { AnnouncementPlacement } from "@prisma/client";
+import {
+  founderLoginAction,
+  founderLogoutAction,
+  saveAnnouncementAction,
+} from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -78,6 +85,10 @@ export default async function FounderPage({
   const m = await founderMetrics();
   const conv = m.conversionRate7d;
   const vc = m.visitorConversion7d;
+
+  const announcements = await prisma.announcement.findMany();
+  const annByPlacement = new Map(announcements.map((a) => [a.placement, a]));
+  const placements = Object.keys(PLACEMENT_LABELS) as AnnouncementPlacement[];
 
   return (
     <main className="theme-general min-h-screen flex flex-col items-center px-5 py-8">
@@ -226,6 +237,56 @@ export default async function FounderPage({
             </div>
           </div>
         </Section>
+
+        <div id="announcements">
+          <Section title="الإعلانات">
+            <p className="muted text-sm -mt-2">
+              الإعلان المخصص لصفحةٍ ما يَغلب الإعلان العام عليها. نص فارغ + حفظ = حذف الإعلان.
+            </p>
+            {placements.map((p) => {
+              const a = annByPlacement.get(p);
+              return (
+                <form
+                  key={p}
+                  action={saveAnnouncementAction}
+                  className="surface p-4 flex flex-col gap-2"
+                >
+                  <input type="hidden" name="placement" value={p} />
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-sm">{PLACEMENT_LABELS[p]}</span>
+                    <label className="flex items-center gap-2 text-xs muted">
+                      <input
+                        type="checkbox"
+                        name="isActive"
+                        defaultChecked={a ? a.isActive : true}
+                        className="w-4 h-4"
+                      />
+                      فعّال
+                    </label>
+                  </div>
+                  <textarea
+                    name="text"
+                    rows={2}
+                    defaultValue={a?.text ?? ""}
+                    placeholder="نص الإعلان…"
+                    className="input-field p-3 text-sm"
+                  />
+                  <input
+                    name="linkUrl"
+                    type="url"
+                    dir="ltr"
+                    defaultValue={a?.linkUrl ?? ""}
+                    placeholder="https://… (رابط اختياري)"
+                    className="input-field p-2 text-xs"
+                  />
+                  <button type="submit" className="btn-accent py-2 text-sm">
+                    حفظ
+                  </button>
+                </form>
+              );
+            })}
+          </Section>
+        </div>
 
         <p className="muted text-center text-xs">
           الأرقام مبنية على سجل الأحداث منذ تفعيله — «اليوم» بتوقيت الرياض

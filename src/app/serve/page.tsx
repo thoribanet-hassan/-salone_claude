@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { themeFor } from "@/lib/theme";
 import { serviceDateFor } from "@/lib/queue";
 import ServeView from "./ServeView";
+import AnnouncementBanner from "@/components/AnnouncementBanner";
 
 export const metadata = { title: "شاشة الموظف | دورك" };
 
@@ -40,6 +41,7 @@ export default async function ServePage() {
 
   return (
     <main className={`${theme.className} min-h-screen flex flex-col items-center px-5 py-6`}>
+      <AnnouncementBanner page="serve" className="w-full max-w-md mb-4" />
       <ServeView
         theme={theme.className}
         shopName={shop.name}
