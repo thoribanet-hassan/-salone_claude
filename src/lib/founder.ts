@@ -89,6 +89,8 @@ export interface FounderMetrics {
   ticketsToday: number;
   tickets7d: number;
   ticketsAllTime: number;
+  avgRating7d: number | null;
+  ratingCount7d: number;
   // التحويل: من مسح/فتح صفحة الحجز إلى إنشاء دور (آخر 7 أيام)
   conversionRate7d: number | null; // تذاكر ÷ مسحات
   visitorConversion7d: { scanned: number; booked: number } | null; // زوّار فريدون
@@ -114,6 +116,7 @@ export async function founderMetrics(): Promise<FounderMetrics> {
     ticketsToday,
     tickets7d,
     ticketsAllTime,
+    ratingAgg,
     distinctVisitors,
     scanSources,
     ticketSources,
@@ -139,6 +142,11 @@ export async function founderMetrics(): Promise<FounderMetrics> {
     prisma.event.count({ where: { type: "TICKET_CREATED", createdAt: { gte: dayStart } } }),
     prisma.event.count({ where: { type: "TICKET_CREATED", createdAt: { gte: weekStart } } }),
     prisma.ticket.count(),
+    prisma.ticket.aggregate({
+      where: { rating: { not: null }, completedAt: { gte: weekStart } },
+      _avg: { rating: true },
+      _count: { rating: true },
+    }),
     prisma.$queryRaw<{ scanned: bigint; booked: bigint }[]>`
       SELECT
         COUNT(DISTINCT visitor_id) FILTER (WHERE type = 'QR_SCANNED')     AS scanned,
@@ -222,6 +230,8 @@ export async function founderMetrics(): Promise<FounderMetrics> {
     ticketsToday,
     tickets7d,
     ticketsAllTime,
+    avgRating7d: ratingAgg._avg.rating ?? null,
+    ratingCount7d: ratingAgg._count.rating,
     conversionRate7d: qrScans7d > 0 ? tickets7d / qrScans7d : null,
     visitorConversion7d: dv ? { scanned: Number(dv.scanned), booked: Number(dv.booked) } : null,
     sources,

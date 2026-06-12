@@ -22,6 +22,7 @@ export interface TicketState {
   barberName: string | null;
   // رسالة الحالة الجاهزة للعرض
   headline: string;
+  rating: number | null; // تقييم الزبون (إن قيّم) — لإخفاء منتقي التقييم بعد الإرسال
   // إعدادات العرض (toggles)
   settings: {
     showExpectedTime: boolean;
@@ -138,6 +139,7 @@ export async function getTicketState(token: string): Promise<TicketState | null>
     appointmentLabel,
     barberName: ticket.barber?.name ?? null,
     headline,
+    rating: ticket.rating ?? null,
     settings: {
       showExpectedTime: !!ticket.shop.settings?.showExpectedTime,
       showPeopleAhead: !!ticket.shop.settings?.showPeopleAhead,

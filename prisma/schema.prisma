@@ -67,6 +67,7 @@ enum EventType {
   SERVICE_COMPLETED
   NO_SHOW
   APPOINTMENT_CREATED
+  SERVICE_RATED
 }
 
 // سجل أحداث القياس — append-only بلا علاقات FK عمداً:
@@ -222,6 +223,7 @@ model Ticket {
   startedAt    DateTime?    @map("started_at")
   completedAt  DateTime?    @map("completed_at")
   cancelledAt  DateTime?    @map("cancelled_at")
+  rating       Int?         // تقييم الزبون للخدمة بعد إكمالها (1-5)
 
   shop    Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
   barber  User?    @relation(fields: [barberId], references: [id], onDelete: SetNull)

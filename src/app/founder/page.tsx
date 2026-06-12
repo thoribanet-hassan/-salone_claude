@@ -251,6 +251,11 @@ export default async function FounderPage({
               value={nf.format(m.tickets7d)}
               hint={`الإجمالي منذ البداية: ${nf.format(m.ticketsAllTime)}`}
             />
+            <Kpi
+              label="متوسط التقييم آخر ٧ أيام"
+              value={m.avgRating7d != null ? `${m.avgRating7d.toFixed(1)} ★` : "—"}
+              hint={`${nf.format(m.ratingCount7d)} تقييم`}
+            />
           </div>
         </Section>
 

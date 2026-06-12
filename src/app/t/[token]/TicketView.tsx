@@ -28,6 +28,7 @@ interface State {
   appointmentLabel: string | null;
   barberName: string | null;
   headline: string;
+  rating: number | null;
   settings: {
     showExpectedTime: boolean;
     showPeopleAhead: boolean;
@@ -107,7 +108,31 @@ export default function TicketView({
   const [online, setOnline] = useState(true);
   const [soundOn, setSoundOn] = useState(true); // 🔔 التنبيه الصوتي مفعّل افتراضياً
   const [queueMoved, setQueueMoved] = useState<number | null>(null); // شريط "تقدّم الدور" المؤقت
+  const [myRating, setMyRating] = useState<number | null>(initial.rating);
+  const [hoverStar, setHoverStar] = useState(0);
   const inFlight = useRef(false);
+
+  // إرسال تقييم الخدمة (مرة واحدة) — تفاؤلي مع حفظ في الخادم
+  const submitRating = useCallback(
+    async (n: number) => {
+      setMyRating(n);
+      try {
+        await fetch(`/api/t/${token}/rate`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ rating: n }),
+        });
+      } catch {
+        // التفاؤلي يبقى؛ المزامنة التالية تصحّح إن لزم
+      }
+    },
+    [token]
+  );
+
+  // مزامنة التقييم من الخادم إن قُيّم من جهاز آخر
+  useEffect(() => {
+    if (state.rating != null) setMyRating(state.rating);
+  }, [state.rating]);
 
   // صوت: AudioContext + لقطة حيّة من حالة الطابور لقراءتها داخل المؤقّت
   const ctxRef = useRef<AudioContext | null>(null);
@@ -433,6 +458,39 @@ export default function TicketView({
           </p>
         )}
       </div>
+
+      {/* تقييم الخدمة بعد إكمالها */}
+      {s.status === "completed" && (
+        <div className="surface p-6 text-center flex flex-col items-center gap-3">
+          <p className="font-bold">
+            {myRating != null ? "شكراً لتقييمك 🌟" : "كيف كانت خدمتك؟"}
+          </p>
+          <div className="flex gap-2" dir="ltr" role="radiogroup" aria-label="تقييم الخدمة">
+            {[1, 2, 3, 4, 5].map((n) => {
+              const active = (hoverStar || myRating || 0) >= n;
+              return (
+                <button
+                  key={n}
+                  type="button"
+                  disabled={myRating != null}
+                  onClick={() => submitRating(n)}
+                  onMouseEnter={() => myRating == null && setHoverStar(n)}
+                  onMouseLeave={() => setHoverStar(0)}
+                  aria-label={`${n} من 5`}
+                  className="text-4xl leading-none transition-transform"
+                  style={{
+                    color: active ? "var(--accent)" : "var(--text-muted)",
+                    cursor: myRating != null ? "default" : "pointer",
+                    transform: active ? "scale(1.1)" : "scale(1)",
+                  }}
+                >
+                  {active ? "★" : "☆"}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {!isServing && !isDone && (
         <div className="grid grid-cols-1 gap-3">
