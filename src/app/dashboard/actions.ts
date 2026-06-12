@@ -6,12 +6,96 @@ import { prisma } from "@/lib/db";
 import { getSession } from "@/lib/auth";
 import { generateLoginCode } from "@/lib/shop";
 import { setBarberStatus } from "@/lib/queue";
-import type { CountdownMode } from "@prisma/client";
+import { storeMedia, removeMediaFile } from "@/lib/media";
+import type { CountdownMode, AnnouncementPlacement } from "@prisma/client";
 
 async function requireManager() {
   const s = await getSession();
   if (!s || s.role !== "manager") redirect("/login");
   return { userId: BigInt(s.userId), shopId: BigInt(s.shopId) };
+}
+
+// مواضع إعلان المنشأة (دون «home» — الرئيسية ليست تابعة لمنشأة)
+const SHOP_PLACEMENTS: AnnouncementPlacement[] = ["all", "join", "ticket", "dashboard", "serve"];
+
+// يتأكد أن المنشأة مُنحت صلاحية الإعلان الذاتي
+async function requireSelfAnnounce(): Promise<bigint> {
+  const { shopId } = await requireManager();
+  const shop = await prisma.shop.findUnique({ where: { id: shopId }, select: { canSelfAnnounce: true } });
+  if (!shop?.canSelfAnnounce) redirect("/dashboard");
+  return shopId;
+}
+
+// حفظ/تعديل إعلان تملكه المنشأة — يُجبَر ownerShopId على منشأة المدير (لا يعلن لغيرها)
+export async function saveShopAnnouncementAction(formData: FormData): Promise<void> {
+  const shopId = await requireSelfAnnounce();
+
+  const placementRaw = String(formData.get("placement") ?? "");
+  const placement = SHOP_PLACEMENTS.find((p) => p === placementRaw);
+  if (!placement) redirect("/dashboard#myads");
+
+  const text = String(formData.get("text") ?? "").trim();
+  if (!text) redirect("/dashboard#myads");
+  const linkRaw = String(formData.get("linkUrl") ?? "").trim();
+  const linkUrl = /^https?:\/\/\S+$/.test(linkRaw) ? linkRaw : null;
+  const isActive = formData.get("isActive") === "on";
+  const removeMedia = formData.get("removeMedia") === "on";
+  const idRaw = String(formData.get("id") ?? "");
+
+  const mediaFile = formData.get("media");
+  const uploaded = mediaFile instanceof File && mediaFile.size > 0 ? await storeMedia(mediaFile) : null;
+
+  if (/^\d+$/.test(idRaw)) {
+    const id = BigInt(idRaw);
+    // ملكية: لا يعدّل إلا إعلان منشأته
+    const existing = await prisma.announcement.findFirst({ where: { id, ownerShopId: shopId } });
+    if (!existing) redirect("/dashboard#myads");
+    let mediaUrl = existing.mediaUrl;
+    let mediaType = existing.mediaType;
+    if (uploaded) {
+      await removeMediaFile(existing.mediaUrl);
+      mediaUrl = uploaded.url;
+      mediaType = uploaded.type;
+    } else if (removeMedia) {
+      await removeMediaFile(existing.mediaUrl);
+      mediaUrl = null;
+      mediaType = null;
+    }
+    await prisma.announcement.update({
+      where: { id },
+      data: { placement, text, linkUrl, isActive, mediaUrl, mediaType },
+    });
+  } else {
+    await prisma.announcement.create({
+      data: {
+        placement,
+        text,
+        linkUrl,
+        isActive,
+        ownerShopId: shopId,
+        mediaUrl: uploaded?.url ?? null,
+        mediaType: uploaded?.type ?? null,
+      },
+    });
+  }
+  revalidatePath("/dashboard");
+  redirect("/dashboard#myads");
+}
+
+export async function deleteShopAnnouncementAction(formData: FormData): Promise<void> {
+  const shopId = await requireSelfAnnounce();
+  const idRaw = String(formData.get("id") ?? "");
+  if (/^\d+$/.test(idRaw)) {
+    const existing = await prisma.announcement.findFirst({
+      where: { id: BigInt(idRaw), ownerShopId: shopId },
+    });
+    if (existing) {
+      await removeMediaFile(existing.mediaUrl);
+      await prisma.announcement.delete({ where: { id: existing.id } });
+    }
+  }
+  revalidatePath("/dashboard");
+  redirect("/dashboard#myads");
 }
 
 const PLAN_LIMITS: Record<string, number> = {

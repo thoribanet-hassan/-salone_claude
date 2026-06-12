@@ -1,51 +1,17 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { mkdir, writeFile, unlink } from "fs/promises";
-import path from "path";
-import { randomUUID } from "crypto";
 import {
   verifyFounderPassword,
   setFounderSession,
   clearFounderSession,
   isFounder,
 } from "@/lib/founder";
+import { storeMedia, removeMediaFile } from "@/lib/media";
 import { prisma } from "@/lib/db";
-import type { AnnouncementPlacement, MediaType } from "@prisma/client";
+import type { AnnouncementPlacement } from "@prisma/client";
 
 const PLACEMENTS: AnnouncementPlacement[] = ["all", "home", "join", "ticket", "dashboard", "serve"];
-
-// ===== وسائط الإعلانات: تُحفظ في public/uploads/announcements وتُقدَّم كملفات ثابتة =====
-
-const UPLOADS_DIR = path.join(process.cwd(), "public", "uploads", "announcements");
-const MAX_MEDIA_BYTES = 40 * 1024 * 1024; // 40MB
-const MEDIA_EXT: Record<string, { ext: string; type: MediaType }> = {
-  "image/jpeg": { ext: "jpg", type: "image" },
-  "image/png": { ext: "png", type: "image" },
-  "image/webp": { ext: "webp", type: "image" },
-  "image/gif": { ext: "gif", type: "image" },
-  "video/mp4": { ext: "mp4", type: "video" },
-  "video/webm": { ext: "webm", type: "video" },
-  "video/quicktime": { ext: "mov", type: "video" },
-};
-
-async function storeMedia(file: File): Promise<{ url: string; type: MediaType } | null> {
-  const kind = MEDIA_EXT[file.type];
-  if (!kind || file.size === 0 || file.size > MAX_MEDIA_BYTES) return null;
-  await mkdir(UPLOADS_DIR, { recursive: true });
-  const name = `${randomUUID()}.${kind.ext}`;
-  await writeFile(path.join(UPLOADS_DIR, name), Buffer.from(await file.arrayBuffer()));
-  return { url: `/uploads/announcements/${name}`, type: kind.type };
-}
-
-async function removeMediaFile(url: string | null): Promise<void> {
-  if (!url || !url.startsWith("/uploads/announcements/")) return;
-  try {
-    await unlink(path.join(process.cwd(), "public", url));
-  } catch {
-    // الملف غير موجود أصلاً — لا شيء يُفعل
-  }
-}
 
 export async function founderLoginAction(formData: FormData): Promise<void> {
   const pw = String(formData.get("password") ?? "");
@@ -135,4 +101,17 @@ export async function deleteAnnouncementAction(formData: FormData): Promise<void
     }
   }
   redirect("/founder#announcements");
+}
+
+// منح/سحب صلاحية الإعلان الذاتي لمنشأة — المؤسس حصراً
+export async function toggleSelfAnnounceAction(formData: FormData): Promise<void> {
+  if (!(await isFounder())) redirect("/founder");
+  const idRaw = String(formData.get("shopId") ?? "");
+  if (/^\d+$/.test(idRaw)) {
+    await prisma.shop.update({
+      where: { id: BigInt(idRaw) },
+      data: { canSelfAnnounce: formData.get("grant") === "on" },
+    });
+  }
+  redirect("/founder#self-announce");
 }

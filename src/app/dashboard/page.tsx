@@ -19,9 +19,85 @@ import {
   setPriceAction,
   setDurationAction,
   updateSettingsAction,
+  saveShopAnnouncementAction,
+  deleteShopAnnouncementAction,
 } from "./actions";
 
+const SHOP_AD_LABELS: Record<string, string> = {
+  all: "كل صفحاتي",
+  join: "صفحة الحجز",
+  ticket: "تذكرة الانتظار",
+  dashboard: "لوحتي",
+  serve: "شاشة الموظف",
+};
+
 export const metadata = { title: "لوحة التحكم | دورك" };
+
+interface ShopAd {
+  id: string;
+  placement: string;
+  text: string;
+  linkUrl: string | null;
+  isActive: boolean;
+  mediaUrl: string | null;
+  mediaType: string | null;
+}
+
+// نموذج إعلان منشأة (جديد أو تعديل) — زر الحذف عبر formAction
+function ShopAdForm({ a }: { a: ShopAd | null }) {
+  return (
+    <form
+      action={saveShopAnnouncementAction}
+      className="flex flex-col gap-2 p-3 rounded-xl"
+      style={{ border: "1px solid var(--border)" }}
+    >
+      {a && <input type="hidden" name="id" value={a.id} />}
+      <div className="flex items-center gap-2">
+        <select name="placement" defaultValue={a?.placement ?? "all"} className="input-field px-3 py-2 text-sm flex-1">
+          {Object.entries(SHOP_AD_LABELS).map(([k, v]) => (
+            <option key={k} value={k}>{v}</option>
+          ))}
+        </select>
+        <label className="flex items-center gap-1 text-xs muted shrink-0">
+          <input type="checkbox" name="isActive" defaultChecked={a ? a.isActive : true} className="w-4 h-4" />
+          فعّال
+        </label>
+      </div>
+      <textarea name="text" rows={2} required defaultValue={a?.text ?? ""} placeholder="نص الإعلان…" className="input-field p-3 text-sm" />
+      <input name="linkUrl" type="url" dir="ltr" defaultValue={a?.linkUrl ?? ""} placeholder="https://… (رابط اختياري)" className="input-field p-2 text-xs" />
+      {a?.mediaUrl && (
+        <div className="flex items-center gap-3">
+          {a.mediaType === "video" ? (
+            <video src={a.mediaUrl} className="h-14 rounded" muted playsInline preload="metadata" />
+          ) : (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img src={a.mediaUrl} alt="" className="h-14 rounded object-cover" />
+          )}
+          <label className="flex items-center gap-2 text-xs muted">
+            <input type="checkbox" name="removeMedia" className="w-4 h-4" />
+            إزالة الوسائط
+          </label>
+        </div>
+      )}
+      <input
+        name="media"
+        type="file"
+        accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm,video/quicktime"
+        className="input-field p-2 text-xs"
+      />
+      <div className="flex gap-2">
+        <button type="submit" className="btn-accent py-2 text-sm flex-1">
+          {a ? "حفظ التعديلات" : "إضافة الإعلان"}
+        </button>
+        {a && (
+          <button formAction={deleteShopAnnouncementAction} className="surface px-4 py-2 text-sm font-bold" style={{ color: "#dc2626" }}>
+            حذف
+          </button>
+        )}
+      </div>
+    </form>
+  );
+}
 
 export default async function DashboardPage() {
   const session = await getSession();
@@ -58,6 +134,24 @@ export default async function DashboardPage() {
     orderBy: { completedAt: "desc" },
     take: 10,
   });
+
+  // إعلانات المنشأة الذاتية (إن مُنحت الصلاحية)
+  const shopAds = shop.canSelfAnnounce
+    ? (
+        await prisma.announcement.findMany({
+          where: { ownerShopId: shopId },
+          orderBy: { updatedAt: "desc" },
+        })
+      ).map((a) => ({
+        id: a.id.toString(),
+        placement: a.placement as string,
+        text: a.text,
+        linkUrl: a.linkUrl,
+        isActive: a.isActive,
+        mediaUrl: a.mediaUrl,
+        mediaType: a.mediaType as string | null,
+      }))
+    : [];
 
   const theme = themeFor(shop.facilityType);
   const isManual = shop.settings?.countdownMode === "manual";
@@ -345,6 +439,25 @@ export default async function DashboardPage() {
                     ))}
                   </div>
                 </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {shop.canSelfAnnounce && (
+          <section id="myads" className="surface p-5">
+            <h2 className="font-extrabold mb-1">إعلانات منشأتي 📣</h2>
+            <p className="muted text-sm mb-3">
+              تظهر على صفحات منشأتك فقط. نص فارغ لا يُحفظ.
+            </p>
+            <p className="font-bold text-sm mb-2">➕ إعلان جديد</p>
+            <ShopAdForm a={null} />
+            {shopAds.length > 0 && (
+              <p className="font-bold text-sm mt-4 mb-2">إعلاناتي ({shopAds.length})</p>
+            )}
+            <div className="flex flex-col gap-3">
+              {shopAds.map((a) => (
+                <ShopAdForm key={a.id} a={a} />
               ))}
             </div>
           </section>

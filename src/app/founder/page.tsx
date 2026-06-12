@@ -8,6 +8,7 @@ import {
   founderLogoutAction,
   saveAnnouncementAction,
   deleteAnnouncementAction,
+  toggleSelfAnnounceAction,
 } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -197,7 +198,7 @@ export default async function FounderPage({
   const [announcementRows, shopRows] = await Promise.all([
     prisma.announcement.findMany({ orderBy: { updatedAt: "desc" } }),
     prisma.shop.findMany({
-      select: { id: true, name: true, facilityType: true, facilityLabel: true },
+      select: { id: true, name: true, facilityType: true, facilityLabel: true, canSelfAnnounce: true },
       orderBy: { name: "asc" },
     }),
   ]);
@@ -389,6 +390,45 @@ export default async function FounderPage({
             {announcements.map((a) => (
               <AnnouncementForm key={a.id} a={a} shops={shopOptions} />
             ))}
+          </Section>
+        </div>
+
+        <div id="self-announce">
+          <Section title="صلاحية الإعلان الذاتي للمنشآت">
+            <p className="muted text-sm -mt-2">
+              امنح منشأةً صلاحية بثّ إعلاناتها الخاصة على صفحاتها. إعلاناتك (المؤسس) تبقى لها
+              الأولوية وتظهر فوق إعلان المنشأة عند التعارض.
+            </p>
+            <div className="surface p-2 flex flex-col">
+              {shopRows.map((s, i) => (
+                <form
+                  key={s.id.toString()}
+                  action={toggleSelfAnnounceAction}
+                  className="flex items-center justify-between p-2 gap-2"
+                  style={i > 0 ? { borderTop: "1px solid var(--border)" } : undefined}
+                >
+                  <input type="hidden" name="shopId" value={s.id.toString()} />
+                  <span className="text-sm font-bold truncate">
+                    {s.name}{" "}
+                    <span className="muted font-normal">
+                      — {TYPE_AR[s.facilityType] ?? "عام"}
+                    </span>
+                  </span>
+                  <label className="flex items-center gap-2 text-xs shrink-0">
+                    <input
+                      type="checkbox"
+                      name="grant"
+                      defaultChecked={s.canSelfAnnounce}
+                      className="w-4 h-4"
+                    />
+                    مسموح
+                    <button type="submit" className="surface px-3 py-1 font-bold">
+                      حفظ
+                    </button>
+                  </label>
+                </form>
+              ))}
+            </div>
           </Section>
         </div>
 

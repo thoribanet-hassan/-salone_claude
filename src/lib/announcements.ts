@@ -13,25 +13,8 @@ export const PLACEMENT_LABELS: Record<AnnouncementPlacement, string> = {
   serve: "شاشة الموظف",
 };
 
-// إعلان الصفحة لمنشأة معيّنة — الأكثر تخصيصاً يفوز:
-// (صفحة محددة + منشآت محددة) > (صفحة محددة لكل المنشآت) > (عام + منشآت محددة) > (عام للكل)
-// الصفحات بلا سياق منشأة (الرئيسية) تعرض الإعلانات المبثوثة للكل فقط
-export async function announcementFor(
-  page: PagePlacement,
-  shopId?: bigint | null
-): Promise<Announcement | null> {
-  const rows = await prisma.announcement.findMany({
-    where: {
-      isActive: true,
-      placement: { in: [page, "all"] },
-      OR: [
-        { shopIds: { isEmpty: true } },
-        ...(shopId != null ? [{ shopIds: { has: shopId } }] : []),
-      ],
-    },
-    orderBy: { updatedAt: "desc" },
-  });
-
+// ضمن مجموعة مرشّحين: الأكثر تخصيصاً يفوز (صفحة محددة تغلب «all»، ومستهدِف يغلب عاماً)
+function pickBest(rows: Announcement[], page: PagePlacement): Announcement | null {
   let best: Announcement | null = null;
   let bestScore = -1;
   for (const r of rows) {
@@ -42,4 +25,35 @@ export async function announcementFor(
     }
   }
   return best;
+}
+
+// إعلان الصفحة لمنشأة معيّنة. الأولوية المطلقة للمؤسس: إن وُجد إعلان مؤسس ينطبق
+// على هذه الصفحة/المنشأة يظهر هو؛ وإلا يملأ الفراغُ إعلانُ المنشأة الخاص (إن مُنحت الصلاحية).
+export async function announcementFor(
+  page: PagePlacement,
+  shopId?: bigint | null
+): Promise<Announcement | null> {
+  // 1) إعلانات المؤسس (ownerShopId = null) — مستهدِفة لهذه المنشأة أو مبثوثة للكل
+  const founderRows = await prisma.announcement.findMany({
+    where: {
+      isActive: true,
+      ownerShopId: null,
+      placement: { in: [page, "all"] },
+      OR: [
+        { shopIds: { isEmpty: true } },
+        ...(shopId != null ? [{ shopIds: { has: shopId } }] : []),
+      ],
+    },
+    orderBy: { updatedAt: "desc" },
+  });
+  const founder = pickBest(founderRows, page);
+  if (founder) return founder;
+
+  // 2) إعلان المنشأة الخاص (يظهر على صفحاتها فقط)
+  if (shopId == null) return null;
+  const shopRows = await prisma.announcement.findMany({
+    where: { isActive: true, ownerShopId: shopId, placement: { in: [page, "all"] } },
+    orderBy: { updatedAt: "desc" },
+  });
+  return pickBest(shopRows, page);
 }

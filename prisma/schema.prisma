@@ -111,12 +111,15 @@ model Announcement {
   mediaUrl  String?               @map("media_url") // مسار صورة/فيديو مرفوع في public/uploads
   mediaType MediaType?            @map("media_type")
   isActive  Boolean               @default(true) @map("is_active")
-  // استهداف المنشآت: مصفوفة فارغة = يُبث لكل المنشآت
+  // استهداف المنشآت (لإعلانات المؤسس): مصفوفة فارغة = يُبث لكل المنشآت
   shopIds   BigInt[]              @default([]) @map("shop_ids")
+  // مالك الإعلان: null = إعلان المؤسس، قيمة = إعلان تملكه هذه المنشأة (يظهر على صفحاتها فقط)
+  ownerShopId BigInt?             @map("owner_shop_id")
   createdAt DateTime              @default(now()) @map("created_at")
   updatedAt DateTime              @updatedAt @map("updated_at")
 
   @@index([isActive, placement])
+  @@index([ownerShopId])
   @@map("announcements")
 }
 
@@ -130,6 +133,7 @@ model Shop {
   slug         String       @unique
   plan         Plan         @default(basic)
   timezone     String       @default("Asia/Riyadh")
+  canSelfAnnounce Boolean    @default(false) @map("can_self_announce") // يمنحها المؤسس: بث إعلانات خاصة بالمنشأة
   createdAt    DateTime     @default(now()) @map("created_at")
   updatedAt    DateTime     @updatedAt @map("updated_at")
 
