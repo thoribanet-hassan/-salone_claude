@@ -191,6 +191,14 @@ export async function updateSettingsAction(formData: FormData) {
   const b = (k: string) => formData.get(k) === "on";
   const modeRaw = String(formData.get("countdownMode"));
   const mode = (["auto", "manual", "none"].includes(modeRaw) ? modeRaw : "auto") as CountdownMode;
+  const time = (k: string, def: string) => {
+    const v = String(formData.get(k) ?? "");
+    return /^([01]\d|2[0-3]):[0-5]\d$/.test(v) ? v : def;
+  };
+  const clampInt = (k: string, def: number, min: number, max: number) => {
+    const n = parseInt(String(formData.get(k)), 10);
+    return Number.isFinite(n) ? Math.min(max, Math.max(min, n)) : def;
+  };
   await prisma.shopSettings.update({
     where: { shopId },
     data: {
@@ -204,6 +212,10 @@ export async function updateSettingsAction(formData: FormData) {
       showBarberName: b("showBarberName"),
       showCountdown: b("showCountdown"),
       countdownMode: mode,
+      openTime: time("openTime", "09:00"),
+      closeTime: time("closeTime", "22:00"),
+      slotMinutes: clampInt("slotMinutes", 30, 5, 240),
+      appointmentGraceMinutes: clampInt("appointmentGraceMinutes", 15, 0, 120),
     },
   });
   revalidatePath("/dashboard");

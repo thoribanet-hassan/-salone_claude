@@ -160,6 +160,12 @@ model ShopSettings {
   countdownMode CountdownMode @default(auto) @map("countdown_mode")
   // السماح للزبون بالحجز في ساعة معينة (مواعيد)
   allowScheduling Boolean @default(true) @map("allow_scheduling")
+  // ساعات العمل وطول الخانة — لتوليد خانات المواعيد المتاحة
+  openTime  String @default("09:00") @map("open_time") // "HH:MM" بتوقيت المنشأة
+  closeTime String @default("22:00") @map("close_time")
+  slotMinutes Int  @default(30) @map("slot_minutes")
+  // نافذة حماية الموعد بالدقائق (قابلة للضبط)
+  appointmentGraceMinutes Int @default(15) @map("appointment_grace_minutes")
 
   shop Shop @relation(fields: [shopId], references: [id], onDelete: Cascade)
 

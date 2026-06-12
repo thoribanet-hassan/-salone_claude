@@ -33,13 +33,19 @@ export async function createBookingAction(
   });
   if (!shop) return { error: "المحل غير موجود" };
 
+  const isScheduled = whenMode === "scheduled";
+
   // قواعد منع الحجز (المدير مزوّد خدمة أيضاً)
   const activeBarbers = await prisma.user.findMany({
     where: { shopId: shop.id, role: { in: ["manager", "barber"] }, isActive: true },
   });
   const availableBarbers = activeBarbers.filter((b) => b.status === "available");
 
-  if (!shop.settings?.isOpen || activeBarbers.length === 0 || availableBarbers.length === 0) {
+  if (!shop.settings?.isOpen || activeBarbers.length === 0) {
+    return { error: "نعتذر منك، استقبال العملاء متوقف حالياً في هذا الفرع" };
+  }
+  // الحجز الفوري يتطلب موظفاً متاحاً الآن؛ الموعد المسبق لا (سيُخدَم لاحقاً)
+  if (!isScheduled && availableBarbers.length === 0) {
     return { error: "نعتذر منك، استقبال العملاء متوقف حالياً في هذا الفرع" };
   }
 
@@ -49,22 +55,30 @@ export async function createBookingAction(
   });
   if (validServices.length === 0) return { error: "الخدمة المختارة غير متاحة، اختر غيرها" };
 
-  // حلاق محدد أم pool مشترك
+  // حلاق محدد أم pool مشترك — الموعد المسبق يقبل أي موظف نشط، الفوري يتطلب متاحاً الآن
   let barberId: bigint | null = null;
   if (barberRaw) {
-    const chosen = availableBarbers.find((b) => b.id.toString() === barberRaw);
-    if (!chosen) return { error: "الحلاق المختار غير متاح حالياً، اختر غيره" };
+    const pool = isScheduled ? activeBarbers : availableBarbers;
+    const chosen = pool.find((b) => b.id.toString() === barberRaw);
+    if (!chosen) return { error: "الموظف المختار غير متاح، اختر غيره" };
     barberId = chosen.id;
   }
 
-  // موعد محدّد (إن اختاره الزبون) — يجب أن يكون في المستقبل اليوم
+  // موعد محدّد (إن اختاره الزبون) — يجب أن يكون في المستقبل اليوم وخانته غير ممتلئة
   let scheduledAt: Date | null = null;
-  if (whenMode === "scheduled") {
+  if (isScheduled) {
     if (!scheduledTime) return { error: "يرجى اختيار وقت الموعد" };
     scheduledAt = scheduledAtFromLocal(shop.timezone, scheduledTime);
     if (!scheduledAt) return { error: "صيغة الوقت غير صحيحة" };
     if (scheduledAt.getTime() <= Date.now() + 60_000)
       return { error: "اختر وقتاً قادماً (ليس وقتاً مضى)" };
+    // حصرية الخانة: سعتها = عدد المزوّدين النشطين (يحمي من الحجز المزدوج)
+    const taken = await prisma.ticket.count({
+      where: { shopId: shop.id, status: { in: ["waiting", "serving"] }, scheduledAt },
+    });
+    if (taken >= activeBarbers.length) {
+      return { error: "هذا الموعد لم يعد متاحاً، اختر وقتاً آخر" };
+    }
   }
 
   const visitorId = await visitorIdFrom();

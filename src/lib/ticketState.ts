@@ -43,7 +43,10 @@ export async function getTicketState(token: string): Promise<TicketState | null>
   if (!ticket) return null;
 
   const theme = themeFor(ticket.shop.facilityType);
-  const { peopleAhead, remainingMinutes: autoMinutes } = await queueInfoFor(ticket);
+  const { peopleAhead, remainingMinutes: autoMinutes } = await queueInfoFor(
+    ticket,
+    ticket.shop.settings?.appointmentGraceMinutes ?? undefined
+  );
   const isManual = ticket.shop.settings?.countdownMode === "manual";
   const isNone = ticket.shop.settings?.countdownMode === "none"; // عيادة: بلا تقدير زمني
 

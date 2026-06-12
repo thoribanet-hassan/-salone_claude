@@ -16,6 +16,13 @@ interface ServiceOption {
   price: number;
 }
 
+interface SlotOption {
+  time: string; // "HH:MM"
+  label: string;
+  available: boolean;
+  past: boolean;
+}
+
 interface Props {
   slug: string;
   barbers: BarberOption[];
@@ -23,6 +30,7 @@ interface Props {
   showProviderChoice: boolean;
   allowServiceChoice: boolean;
   allowScheduling: boolean; // السماح بالحجز في ساعة معينة (من لوحة التحكم)
+  slots: SlotOption[]; // خانات المواعيد المتاحة وغير المتاحة
   showPrices: boolean;
 }
 
@@ -35,7 +43,7 @@ function SubmitButton() {
   );
 }
 
-export default function BookingForm({ slug, barbers, services, showProviderChoice, allowServiceChoice, allowScheduling, showPrices }: Props) {
+export default function BookingForm({ slug, barbers, services, showProviderChoice, allowServiceChoice, allowScheduling, slots, showPrices }: Props) {
   // تظهر كل الخدمات النشطة للاختيار (حتى لو واحدة). تُخفى فقط إن عطّل المدير اختيار الخدمة.
   const showServicePicker = allowServiceChoice && services.length >= 1;
   const [selected, setSelected] = useState<string[]>(
@@ -45,12 +53,9 @@ export default function BookingForm({ slug, barbers, services, showProviderChoic
   const totalMin = chosen.reduce((sum, s) => sum + s.duration, 0);
   const totalPrice = chosen.reduce((sum, s) => sum + s.price, 0);
   const [whenMode, setWhenMode] = useState<"now" | "scheduled">("now");
-  // منتقي وقت سهل: ساعة (1-12) + دقيقة + قبل/بعد الظهر
-  const [apptH, setApptH] = useState(4);
-  const [apptM, setApptM] = useState("00");
-  const [apptPeriod, setApptPeriod] = useState<"am" | "pm">("pm");
-  const apptH24 = apptPeriod === "am" ? apptH % 12 : (apptH % 12) + 12;
-  const scheduledTime24 = `${String(apptH24).padStart(2, "0")}:${apptM}`;
+  // الخانة الزمنية المختارة (HH:MM) — تُرسل في النموذج
+  const [slotTime, setSlotTime] = useState<string>("");
+  const hasFreeSlot = slots.some((s) => s.available);
   const toggle = (id: string) =>
     setSelected((cur) => (cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id]));
   const [state, formAction] = useActionState<BookingState, FormData>(
@@ -182,55 +187,54 @@ export default function BookingForm({ slug, barbers, services, showProviderChoic
         </div>
         {whenMode === "scheduled" && (
           <div className="flex flex-col gap-2 mt-1">
-            {/* قبل / بعد الظهر */}
-            <div className="grid grid-cols-2 gap-2">
-              {([["am", "قبل الظهر ☀️"], ["pm", "بعد الظهر 🌙"]] as const).map(([v, label]) => (
-                <button
-                  key={v}
-                  type="button"
-                  onClick={() => setApptPeriod(v)}
-                  className="py-3 rounded-xl border-2 font-bold"
-                  style={{
-                    borderColor: apptPeriod === v ? "var(--accent)" : "var(--border)",
-                    background: apptPeriod === v ? "var(--surface-2)" : "transparent",
-                  }}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-            {/* الساعة : الدقيقة */}
-            <div className="flex items-center gap-2">
-              <div className="flex-1 flex flex-col gap-1">
-                <span className="muted text-xs">الساعة</span>
-                <select
-                  value={apptH}
-                  onChange={(e) => setApptH(parseInt(e.target.value, 10))}
-                  className="input-field px-3 py-3 text-lg text-center"
-                >
-                  {Array.from({ length: 12 }, (_, i) => i + 1).map((h) => (
-                    <option key={h} value={h}>{h}</option>
-                  ))}
-                </select>
-              </div>
-              <span className="text-2xl font-extrabold mt-4">:</span>
-              <div className="flex-1 flex flex-col gap-1">
-                <span className="muted text-xs">الدقيقة</span>
-                <select
-                  value={apptM}
-                  onChange={(e) => setApptM(e.target.value)}
-                  className="input-field px-3 py-3 text-lg text-center"
-                >
-                  {["00", "15", "30", "45"].map((m) => (
-                    <option key={m} value={m}>{m}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-            <p className="text-sm font-bold text-center" style={{ color: "var(--accent)" }}>
-              موعدك: {apptH}:{apptM} {apptPeriod === "am" ? "قبل الظهر" : "بعد الظهر"}
-            </p>
-            <input type="hidden" name="scheduledTime" value={scheduledTime24} />
+            <input type="hidden" name="scheduledTime" value={slotTime} />
+            {slots.length === 0 ? (
+              <p className="muted text-sm text-center py-3">
+                لا تتوفّر مواعيد اليوم — اختر «الآن مباشرة».
+              </p>
+            ) : !hasFreeSlot ? (
+              <p className="text-sm text-center py-3 font-bold" style={{ color: "var(--accent)" }}>
+                كل مواعيد اليوم محجوزة — جرّب «الآن مباشرة».
+              </p>
+            ) : (
+              <>
+                <p className="muted text-xs">اختر موعداً متاحاً (المحجوزة معطّلة):</p>
+                <div className="grid grid-cols-3 gap-2 max-h-60 overflow-y-auto p-1">
+                  {slots.map((s) => {
+                    const on = slotTime === s.time;
+                    return (
+                      <button
+                        key={s.time}
+                        type="button"
+                        disabled={!s.available}
+                        onClick={() => setSlotTime(s.time)}
+                        title={s.available ? "" : s.past ? "مضى وقته" : "محجوز"}
+                        className="py-2 rounded-xl border-2 font-bold text-sm"
+                        style={{
+                          borderColor: on ? "var(--accent)" : "var(--border)",
+                          background: on ? "var(--accent)" : "transparent",
+                          color: on
+                            ? "var(--accent-contrast)"
+                            : s.available
+                              ? "var(--text)"
+                              : "var(--text-muted)",
+                          opacity: s.available ? 1 : 0.4,
+                          textDecoration: s.available ? "none" : "line-through",
+                          cursor: s.available ? "pointer" : "not-allowed",
+                        }}
+                      >
+                        {s.label}
+                      </button>
+                    );
+                  })}
+                </div>
+                {slotTime && (
+                  <p className="text-sm font-bold text-center" style={{ color: "var(--accent)" }}>
+                    موعدك: {slots.find((s) => s.time === slotTime)?.label}
+                  </p>
+                )}
+              </>
+            )}
           </div>
         )}
       </div>

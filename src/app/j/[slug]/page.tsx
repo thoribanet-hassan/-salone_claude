@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { prisma } from "@/lib/db";
 import { themeFor } from "@/lib/theme";
 import { logEvent, visitorIdFrom, sanitizeSource, sourceFrom } from "@/lib/events";
+import { availableSlotsFor } from "@/lib/slots";
 import AnnouncementBanner from "@/components/AnnouncementBanner";
 import BookingForm from "./BookingForm";
 
@@ -66,6 +67,9 @@ export default async function JoinPage({
     availableBarbers.length > 0 &&
     shop.services.length > 0;
 
+  // خانات المواعيد المتاحة لليوم (تُولَّد فقط إن فُعّلت المواعيد)
+  const slots = shop.settings?.allowScheduling ? await availableSlotsFor(shop) : [];
+
   return (
     <main className={`${theme.className} min-h-screen flex flex-col items-center px-5 py-8`}>
       <div className="w-full max-w-md flex flex-col gap-6">
@@ -101,6 +105,7 @@ export default async function JoinPage({
                 }))}
                 allowServiceChoice={!!shop.settings?.allowServiceChoice}
                 allowScheduling={!!shop.settings?.allowScheduling}
+                slots={slots}
                 showPrices={!!shop.settings?.showPrices}
                 services={shop.services.map((s) => ({
                   id: s.id.toString(),

@@ -4,15 +4,18 @@ import { logEvent } from "./events";
 
 // نافذة حماية الموعد: خلال هذه الدقائق قبل الموعد يُثبَّت صاحبه في مقدمة الطابور،
 // فلا يتقدّمه أي حجز فوري (walk-in) يأتي بعد بدء النافذة، ولا يُنادى موعدٌ قبل بدئها.
-export const APPOINTMENT_GRACE_MINUTES = 15;
-const APPOINTMENT_GRACE_MS = APPOINTMENT_GRACE_MINUTES * 60 * 1000;
+// القيمة قابلة للضبط لكل منشأة (shop_settings.appointment_grace_minutes)؛ هذا الافتراضي fallback.
+export const DEFAULT_GRACE_MINUTES = 15;
 
 // مفتاح ترتيب الطابور الموحّد:
 // - الحجز الفوري: لحظة المسح (created_at)
 // - الموعد المحجوز: بداية نافذة حمايته (الموعد − النافذة) — فمن مسح قبل النافذة يحترم،
 //   ومن مسح بعد بدئها لا يتقدّم الموعد. يطابق منطق SQL في callNextCustomer تماماً.
-export function queueSortKeyMs(t: { scheduledAt: Date | null; createdAt: Date }): number {
-  if (t.scheduledAt) return t.scheduledAt.getTime() - APPOINTMENT_GRACE_MS;
+export function queueSortKeyMs(
+  t: { scheduledAt: Date | null; createdAt: Date },
+  graceMs: number
+): number {
+  if (t.scheduledAt) return t.scheduledAt.getTime() - graceMs;
   return t.createdAt.getTime();
 }
 
@@ -57,7 +60,11 @@ export function scheduledAtFromLocal(timezone: string, hhmm: string): Date | nul
   const offsetMs = localAsUTC - now.getTime(); // إزاحة المنطقة عن UTC
   const [Y, M, D] = ymd.split("-").map(Number);
   const desiredLocalAsUTC = Date.UTC(Y, M - 1, D, hh, mm);
-  return new Date(desiredLocalAsUTC - offsetMs);
+  const result = new Date(desiredLocalAsUTC - offsetMs);
+  // تثبيت الموعد على بداية الدقيقة بالضبط: offsetMs يحمل ثواني/ميلي اللحظة الحالية،
+  // فلولا التصفير لاختلف موعدان بنفس HH:MM بمقدار ثوانٍ → يكسر حصرية الخانة والترتيب.
+  result.setUTCSeconds(0, 0);
+  return result;
 }
 
 export interface CreateTicketInput {
@@ -158,11 +165,15 @@ export interface QueueInfo {
 }
 
 // حساب "عدد الأشخاص قبلك" والوقت المتبقي — الترتيب حسب وقت الموعد (scheduledAt) وإلا وقت الحجز
-export async function queueInfoFor(ticket: Ticket): Promise<QueueInfo> {
+export async function queueInfoFor(
+  ticket: Ticket,
+  graceMinutes: number = DEFAULT_GRACE_MINUTES
+): Promise<QueueInfo> {
   if (ticket.status !== "waiting") return { peopleAhead: 0, remainingMinutes: 0 };
 
   // مفتاح ترتيب هذا الزبون (يراعي نافذة حماية الموعد)
-  const myKey = queueSortKeyMs(ticket);
+  const graceMs = graceMinutes * 60_000;
+  const myKey = queueSortKeyMs(ticket, graceMs);
 
   // نجلب التذاكر المنتظرة لنفس المسار (حلاق محدد أو pool) ونحسب الترتيب في JS (يتفادى التباس المناطق الزمنية)
   const candidates = await prisma.ticket.findMany({
@@ -175,7 +186,7 @@ export async function queueInfoFor(ticket: Ticket): Promise<QueueInfo> {
   });
 
   const ahead = candidates.filter(
-    (t) => t.id !== ticket.id && queueSortKeyMs(t) < myKey
+    (t) => t.id !== ticket.id && queueSortKeyMs(t, graceMs) < myKey
   );
   const remainingMinutes = ahead.reduce((s, t) => s + t.estDuration, 0);
   return { peopleAhead: ahead.length, remainingMinutes };
@@ -310,6 +321,9 @@ export async function callNextCustomer(barberId: bigint): Promise<NextResult> {
   const barber = await prisma.user.findUnique({ where: { id: barberId } });
   if (!barber) return { ok: false, reason: "الحلاق غير موجود" };
 
+  const settings = await prisma.shopSettings.findUnique({ where: { shopId: barber.shopId } });
+  const grace = settings?.appointmentGraceMinutes ?? DEFAULT_GRACE_MINUTES;
+
   const alreadyServing = await prisma.ticket.findFirst({
     where: { barberId, status: "serving" },
   });
@@ -322,7 +336,6 @@ export async function callNextCustomer(barberId: bigint): Promise<NextResult> {
     // الترتيب بمفتاح موحّد: الموعد يُرتّب من بداية نافذة حمايته (الموعد − النافذة).
     // ويُستثنى الموعد الذي لم تبدأ نافذته بعد (لا يُسحب قبل أوانه ولو كان وحده).
     // المقارنة بـ (NOW() AT TIME ZONE 'UTC') لمطابقة تخزين Prisma بلا منطقة زمنية.
-    const grace = APPOINTMENT_GRACE_MINUTES;
     const rows = await tx.$queryRaw<{ id: bigint }[]>(Prisma.sql`
       SELECT id FROM tickets
       WHERE shop_id = ${barber.shopId}

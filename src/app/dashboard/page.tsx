@@ -152,6 +152,36 @@ export default async function DashboardPage() {
               </select>
             </label>
             <Toggle name="allowScheduling" label="السماح بالحجز في ساعة معينة (مواعيد)" checked={!!st?.allowScheduling} />
+            {st?.allowScheduling && (
+              <div className="flex flex-col gap-2 pr-2 mb-1" style={{ borderRight: "2px solid var(--border)" }}>
+                <div className="grid grid-cols-2 gap-2">
+                  <label className="flex flex-col gap-1">
+                    <span className="text-xs muted">فتح المواعيد</span>
+                    <input type="time" name="openTime" defaultValue={st?.openTime ?? "09:00"} className="input-field px-3 py-2" />
+                  </label>
+                  <label className="flex flex-col gap-1">
+                    <span className="text-xs muted">إغلاق المواعيد</span>
+                    <input type="time" name="closeTime" defaultValue={st?.closeTime ?? "22:00"} className="input-field px-3 py-2" />
+                  </label>
+                </div>
+                <label className="flex items-center justify-between gap-2">
+                  <span className="text-sm">طول الخانة</span>
+                  <select name="slotMinutes" defaultValue={String(st?.slotMinutes ?? 30)} className="input-field px-3 py-2">
+                    {[15, 20, 30, 45, 60].map((n) => (
+                      <option key={n} value={n}>كل {n} دقيقة</option>
+                    ))}
+                  </select>
+                </label>
+                <label className="flex items-center justify-between gap-2">
+                  <span className="text-sm">نافذة حماية الموعد</span>
+                  <select name="appointmentGraceMinutes" defaultValue={String(st?.appointmentGraceMinutes ?? 15)} className="input-field px-3 py-2">
+                    {[0, 5, 10, 15, 20, 30, 45, 60].map((n) => (
+                      <option key={n} value={n}>{n === 0 ? "بدون" : `${n} دقيقة قبله`}</option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+            )}
             <Toggle name="showCountdown" label="عرض العدّاد الحي للزبون" checked={!!st?.showCountdown} />
             <Toggle name="showExpectedTime" label="عرض الوقت المتوقع" checked={!!st?.showExpectedTime} />
 
