@@ -1,23 +1,11 @@
 import { Prisma, type Ticket } from "@prisma/client";
 import { prisma } from "./db";
 import { logEvent } from "./events";
+import { notifyTicket, notifyShopQueue } from "./push";
 
-// نافذة حماية الموعد: خلال هذه الدقائق قبل الموعد يُثبَّت صاحبه في مقدمة الطابور،
-// فلا يتقدّمه أي حجز فوري (walk-in) يأتي بعد بدء النافذة، ولا يُنادى موعدٌ قبل بدئها.
-// القيمة قابلة للضبط لكل منشأة (shop_settings.appointment_grace_minutes)؛ هذا الافتراضي fallback.
-export const DEFAULT_GRACE_MINUTES = 15;
-
-// مفتاح ترتيب الطابور الموحّد:
-// - الحجز الفوري: لحظة المسح (created_at)
-// - الموعد المحجوز: بداية نافذة حمايته (الموعد − النافذة) — فمن مسح قبل النافذة يحترم،
-//   ومن مسح بعد بدئها لا يتقدّم الموعد. يطابق منطق SQL في callNextCustomer تماماً.
-export function queueSortKeyMs(
-  t: { scheduledAt: Date | null; createdAt: Date },
-  graceMs: number
-): number {
-  if (t.scheduledAt) return t.scheduledAt.getTime() - graceMs;
-  return t.createdAt.getTime();
-}
+// مفتاح ترتيب الطابور ونافذة الحماية — في وحدة مستقلة (queueKey) تتشاركها push.ts
+export { queueSortKeyMs, DEFAULT_GRACE_MINUTES } from "./queueKey";
+import { queueSortKeyMs, DEFAULT_GRACE_MINUTES } from "./queueKey";
 
 // تاريخ الخدمة بتوقيت المحل (لا بتوقيت الخادم) — أساس التصفير اليومي
 export function serviceDateFor(timezone: string): Date {
@@ -215,6 +203,7 @@ export async function completeService(barberId: bigint): Promise<boolean> {
         : null,
     },
   });
+  void notifyShopQueue(current.shopId); // تقدّم الطابور → إشعار من اقترب دوره
   return true;
 }
 
@@ -236,6 +225,11 @@ export async function skipCurrent(barberId: bigint): Promise<boolean> {
     ticketId: current.id,
     source: current.source,
   });
+  void notifyTicket(current.id, {
+    title: "تم تخطّي دورك",
+    body: "لم تكن حاضراً عند مناداتك — تواصل مع الموظف ليُعيدك إلى الدور",
+  });
+  void notifyShopQueue(current.shopId);
   return true;
 }
 
@@ -272,6 +266,16 @@ export async function cleanupQueues(): Promise<{ abandoned: number; staleServing
     where: { status: "serving", startedAt: { lt: servingTtl } },
     data: { status: "completed", completedAt: now },
   });
+  // اشتراكات Push اليتيمة (تذاكرها لم تعد نشطة) — تُحذف
+  const liveIds = (
+    await prisma.ticket.findMany({
+      where: { status: { in: ["waiting", "serving"] } },
+      select: { id: true },
+    })
+  ).map((t) => t.id);
+  await prisma.pushSubscription
+    .deleteMany({ where: { ticketId: { notIn: liveIds } } })
+    .catch(() => {});
   return { abandoned: abandoned.count, staleServing: staleServing.count };
 }
 
@@ -309,7 +313,12 @@ export async function markNextCustomerReady(
   });
   if (!next) return null;
   const readyAt = new Date(Date.now() + Math.max(0, minutes) * 60_000);
-  return prisma.ticket.update({ where: { id: next.id }, data: { readyAt } });
+  const updated = await prisma.ticket.update({ where: { id: next.id }, data: { readyAt } });
+  void notifyTicket(next.id, {
+    title: "🔔 اقترب دورك",
+    body: `حُدّد وقتك: بعد ${Math.max(1, minutes)} دقيقة تقريباً — جهّز نفسك`,
+  });
+  return updated;
 }
 
 export type NextResult =
@@ -377,6 +386,12 @@ export async function callNextCustomer(barberId: bigint): Promise<NextResult> {
       ticketId: result.ticket.id,
       source: result.ticket.source,
     });
+    void notifyTicket(
+      result.ticket.id,
+      { title: "🎉 حان دورك الآن", body: "يرجى التوجه إلى نقطة الخدمة" },
+      0
+    );
+    void notifyShopQueue(barber.shopId); // البقية تقدّموا درجة
   }
   return result;
 }

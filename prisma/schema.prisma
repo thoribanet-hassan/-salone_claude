@@ -236,6 +236,22 @@ model Ticket {
   @@map("tickets")
 }
 
+// اشتراك إشعارات Push لمتصفح زبون — مربوط بتذكرته الحالية
+// بلا FK عمداً: يُحذف عند فشل الإرسال النهائي (410) أو في التنظيف الدوري
+model PushSubscription {
+  id                BigInt   @id @default(autoincrement())
+  ticketId          BigInt   @map("ticket_id")
+  endpoint          String   @unique
+  p256dh            String
+  auth              String
+  // آخر مرحلة أُشعر بها (0=حان دورك 1=التالي 2=بقي واحد 3=اقترب) — يمنع تكرار الإشعار
+  lastNotifiedStage Int?     @map("last_notified_stage")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  @@index([ticketId])
+  @@map("push_subscriptions")
+}
+
 // عدّاد توليد أرقام التذاكر بأمان (يُقفل صفّه أثناء المعاملة)
 model TicketCounter {
   shopId      BigInt   @map("shop_id")

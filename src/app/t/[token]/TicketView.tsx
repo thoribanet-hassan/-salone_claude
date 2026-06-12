@@ -110,7 +110,83 @@ export default function TicketView({
   const [queueMoved, setQueueMoved] = useState<number | null>(null); // شريط "تقدّم الدور" المؤقت
   const [myRating, setMyRating] = useState<number | null>(initial.rating);
   const [hoverStar, setHoverStar] = useState(0);
+  // إشعارات Push: unsupported | ios (يحتاج تثبيت PWA) | idle | busy | on | denied
+  const [pushState, setPushState] = useState<
+    "unsupported" | "ios" | "idle" | "busy" | "on" | "denied"
+  >("unsupported");
   const inFlight = useRef(false);
+
+  // كشف دعم Push عند التحميل + هل يوجد اشتراك سابق
+  useEffect(() => {
+    const supported =
+      "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
+    if (!supported) {
+      // آيفون/سفاري بلا PWA مثبت: لا Push — نعرض إرشاداً بدل الزر
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+      setPushState(isIOS ? "ios" : "unsupported");
+      return;
+    }
+    if (Notification.permission === "denied") {
+      setPushState("denied");
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const reg = await navigator.serviceWorker.register("/sw.js");
+        const sub = await reg.pushManager.getSubscription();
+        if (cancelled) return;
+        if (sub && Notification.permission === "granted") {
+          // اشتراك قائم → اربطه بهذه التذكرة (آخر تذكرة تكسب)
+          void fetch(`/api/t/${token}/push`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(sub.toJSON()),
+          });
+          setPushState("on");
+        } else {
+          setPushState("idle");
+        }
+      } catch {
+        if (!cancelled) setPushState("unsupported");
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [token]);
+
+  // تفعيل الإشعارات: إذن → اشتراك بمفتاح VAPID → ربط بالتذكرة
+  const enablePush = useCallback(async () => {
+    setPushState("busy");
+    try {
+      const perm = await Notification.requestPermission();
+      if (perm !== "granted") {
+        setPushState(perm === "denied" ? "denied" : "idle");
+        return;
+      }
+      const keyRes = await fetch("/api/push/key");
+      const { key } = await keyRes.json();
+      if (!key) throw new Error("no key");
+      const reg = await navigator.serviceWorker.register("/sw.js");
+      const raw = atob(key.replace(/-/g, "+").replace(/_/g, "/"));
+      const appKey = new Uint8Array([...raw].map((c) => c.charCodeAt(0)));
+      const sub =
+        (await reg.pushManager.getSubscription()) ??
+        (await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: appKey,
+        }));
+      const save = await fetch(`/api/t/${token}/push`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(sub.toJSON()),
+      });
+      setPushState(save.ok ? "on" : "idle");
+    } catch {
+      setPushState("idle");
+    }
+  }, [token]);
 
   // إرسال تقييم الخدمة (مرة واحدة) — تفاؤلي مع حفظ في الخادم
   const submitRating = useCallback(
@@ -383,6 +459,33 @@ export default function TicketView({
         >
           {soundOn ? "🔔 التنبيه الصوتي مُفعّل (إيقاف)" : "🔕 فعّل التنبيه الصوتي"}
         </button>
+      )}
+
+      {/* إشعارات عن بُعد (Push): تعمل حتى مع إغلاق الصفحة — أندرويد/كروم */}
+      {isWaiting && pushState === "idle" && (
+        <button onClick={enablePush} className="btn-accent py-3 font-bold text-sm">
+          📲 نبّهني عند اقتراب دوري (حتى لو أغلقت الصفحة)
+        </button>
+      )}
+      {isWaiting && pushState === "busy" && (
+        <button disabled className="surface py-3 font-bold text-sm opacity-60">
+          جارٍ تفعيل الإشعارات…
+        </button>
+      )}
+      {isWaiting && pushState === "on" && (
+        <div className="surface py-3 text-center font-bold text-sm" style={{ color: "var(--accent)" }}>
+          ✅ سننبهك بإشعار عند اقتراب دورك — يمكنك إغلاق الصفحة
+        </div>
+      )}
+      {isWaiting && pushState === "denied" && (
+        <p className="muted text-center text-xs">
+          الإشعارات محظورة من إعدادات المتصفح — أبقِ الصفحة مفتوحة وسننبهك بالصوت
+        </p>
+      )}
+      {isWaiting && pushState === "ios" && (
+        <p className="muted text-center text-xs">
+          📱 على آيفون: أبقِ هذه الصفحة مفتوحة وسننبهك بالصوت عند اقتراب دورك
+        </p>
       )}
 
       <div className={`surface p-7 text-center flex flex-col items-center gap-2 stage-card ${stageCardCls}`}>
