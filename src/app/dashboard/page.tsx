@@ -179,7 +179,6 @@ export default async function DashboardPage() {
           <p className="muted text-xs mt-1">رمز المحل: {shop.shopCode}</p>
           <div className="flex gap-2 justify-center mt-3 text-sm">
             <a href="/dashboard/stats" className="surface px-3 py-2 font-bold no-underline">📊 الإحصائيات</a>
-            <a href="/guide" className="surface px-3 py-2 font-bold no-underline">📖 الدليل</a>
             <a href={`/display/${shop.slug}`} target="_blank" className="surface px-3 py-2 font-bold no-underline">📺 شاشة العرض</a>
             <a href={`/q/${shop.slug}`} className="surface px-3 py-2 font-bold no-underline">ملصق QR كامل</a>
             <a href="/api/logout" className="surface px-3 py-2 font-bold no-underline">خروج</a>
@@ -187,6 +186,22 @@ export default async function DashboardPage() {
         </header>
 
         <AnnouncementBanner page="dashboard" shopId={shopId} />
+
+        {/* دليل استخدام دورك — مدخل بارز يفتحه المدير ليتعلّم التطبيق */}
+        <a
+          href="/guide"
+          className="no-underline surface p-5 flex items-center gap-4"
+          style={{ borderColor: "var(--accent)", borderWidth: "1.5px" }}
+        >
+          <span className="text-4xl shrink-0">📖</span>
+          <span className="flex-1">
+            <span className="block font-extrabold text-lg">دليل استخدام دورك</span>
+            <span className="block muted text-sm mt-1">
+              جديد على دورك؟ تعلّم كيف تستخدمه بكل عناصره خطوة بخطوة — مع شرح متحرك.
+            </span>
+          </span>
+          <span className="btn-accent py-2 px-4 text-sm font-bold shrink-0">افتح الدليل ←</span>
+        </a>
 
         {/* خدمة العملاء (المدير حلاق أيضاً) */}
         {manager && (
