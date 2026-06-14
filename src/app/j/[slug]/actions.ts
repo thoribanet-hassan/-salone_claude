@@ -5,6 +5,8 @@ import { cookies } from "next/headers";
 import { prisma } from "@/lib/db";
 import { createTicket, scheduledAtFromLocal } from "@/lib/queue";
 import { logEvent, visitorIdFrom, sourceFrom } from "@/lib/events";
+import { getServerLocale } from "@/lib/locale-server";
+import { BOOKING } from "@/i18n/booking";
 
 export interface BookingState {
   error?: string;
@@ -24,14 +26,16 @@ export async function createBookingAction(
   // قد تُختار خدمة واحدة أو أكثر
   const serviceRawList = formData.getAll("serviceIds").map((v) => String(v)).filter(Boolean);
 
-  if (!customerName) return { error: "يرجى إدخال الاسم" };
-  if (serviceRawList.length === 0) return { error: "يرجى اختيار خدمة واحدة على الأقل" };
+  const e = BOOKING[await getServerLocale()]; // رسائل الأخطاء بلغة الزائر
+
+  if (!customerName) return { error: e.errName };
+  if (serviceRawList.length === 0) return { error: e.errService };
 
   const shop = await prisma.shop.findUnique({
     where: { slug },
     include: { settings: true },
   });
-  if (!shop) return { error: "المحل غير موجود" };
+  if (!shop) return { error: e.errShop };
 
   const isScheduled = whenMode === "scheduled";
 
@@ -42,42 +46,42 @@ export async function createBookingAction(
   const availableBarbers = activeBarbers.filter((b) => b.status === "available");
 
   if (!shop.settings?.isOpen || activeBarbers.length === 0) {
-    return { error: "نعتذر منك، استقبال العملاء متوقف حالياً في هذا الفرع" };
+    return { error: e.errClosed };
   }
   // الحجز الفوري يتطلب موظفاً متاحاً الآن؛ الموعد المسبق لا (سيُخدَم لاحقاً)
   if (!isScheduled && availableBarbers.length === 0) {
-    return { error: "نعتذر منك، استقبال العملاء متوقف حالياً في هذا الفرع" };
+    return { error: e.errClosed };
   }
 
   // التحقق من الخدمات المختارة (نشطة وتابعة لهذا المحل)
   const validServices = await prisma.service.findMany({
     where: { id: { in: serviceRawList.map((s) => BigInt(s)) }, shopId: shop.id, isActive: true },
   });
-  if (validServices.length === 0) return { error: "الخدمة المختارة غير متاحة، اختر غيرها" };
+  if (validServices.length === 0) return { error: e.errServiceInvalid };
 
   // حلاق محدد أم pool مشترك — الموعد المسبق يقبل أي موظف نشط، الفوري يتطلب متاحاً الآن
   let barberId: bigint | null = null;
   if (barberRaw) {
     const pool = isScheduled ? activeBarbers : availableBarbers;
     const chosen = pool.find((b) => b.id.toString() === barberRaw);
-    if (!chosen) return { error: "الموظف المختار غير متاح، اختر غيره" };
+    if (!chosen) return { error: e.errProvider };
     barberId = chosen.id;
   }
 
   // موعد محدّد (إن اختاره الزبون) — يجب أن يكون في المستقبل اليوم وخانته غير ممتلئة
   let scheduledAt: Date | null = null;
   if (isScheduled) {
-    if (!scheduledTime) return { error: "يرجى اختيار وقت الموعد" };
+    if (!scheduledTime) return { error: e.errApptTime };
     scheduledAt = scheduledAtFromLocal(shop.timezone, scheduledTime);
-    if (!scheduledAt) return { error: "صيغة الوقت غير صحيحة" };
+    if (!scheduledAt) return { error: e.errApptFormat };
     if (scheduledAt.getTime() <= Date.now() + 60_000)
-      return { error: "اختر وقتاً قادماً (ليس وقتاً مضى)" };
+      return { error: e.errApptPast };
     // حصرية الخانة: سعتها = عدد المزوّدين النشطين (يحمي من الحجز المزدوج)
     const taken = await prisma.ticket.count({
       where: { shopId: shop.id, status: { in: ["waiting", "serving"] }, scheduledAt },
     });
     if (taken >= activeBarbers.length) {
-      return { error: "هذا الموعد لم يعد متاحاً، اختر وقتاً آخر" };
+      return { error: e.errSlotTaken };
     }
   }
 

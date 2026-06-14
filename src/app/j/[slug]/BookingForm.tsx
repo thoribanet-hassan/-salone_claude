@@ -3,6 +3,7 @@
 import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { createBookingAction, type BookingState } from "./actions";
+import type { BookingMsgs } from "@/i18n/booking";
 
 interface BarberOption {
   id: string;
@@ -25,6 +26,7 @@ interface SlotOption {
 
 interface Props {
   slug: string;
+  t: BookingMsgs;
   barbers: BarberOption[];
   services: ServiceOption[];
   showProviderChoice: boolean;
@@ -34,16 +36,16 @@ interface Props {
   showPrices: boolean;
 }
 
-function SubmitButton() {
+function SubmitButton({ t }: { t: BookingMsgs }) {
   const { pending } = useFormStatus();
   return (
     <button type="submit" disabled={pending} className="btn-accent w-full py-4 text-lg mt-2">
-      {pending ? "جارٍ الحجز…" : "احجز دوري الآن"}
+      {pending ? t.submitting : t.submit}
     </button>
   );
 }
 
-export default function BookingForm({ slug, barbers, services, showProviderChoice, allowServiceChoice, allowScheduling, slots, showPrices }: Props) {
+export default function BookingForm({ slug, t, barbers, services, showProviderChoice, allowServiceChoice, allowScheduling, slots, showPrices }: Props) {
   // تظهر كل الخدمات النشطة للاختيار (حتى لو واحدة). تُخفى فقط إن عطّل المدير اختيار الخدمة.
   const showServicePicker = allowServiceChoice && services.length >= 1;
   const [selected, setSelected] = useState<string[]>(
@@ -68,19 +70,19 @@ export default function BookingForm({ slug, barbers, services, showProviderChoic
       <input type="hidden" name="slug" value={slug} />
 
       <div className="flex flex-col gap-2">
-        <label className="font-bold text-sm">اسمك</label>
+        <label className="font-bold text-sm">{t.name}</label>
         <input
           name="customerName"
           required
           autoFocus
-          placeholder="اكتب اسمك"
+          placeholder={t.namePh}
           className="input-field px-4 py-3 text-lg"
         />
       </div>
 
       <div className="flex flex-col gap-2">
         <label className="font-bold text-sm">
-          الجوال <span className="muted font-normal">(اختياري)</span>
+          {t.phone} <span className="muted font-normal">{t.optional}</span>
         </label>
         <input
           name="customerPhone"
@@ -97,7 +99,7 @@ export default function BookingForm({ slug, barbers, services, showProviderChoic
       ) : (
         <div className="flex flex-col gap-2">
           <label className="font-bold text-sm">
-            الخدمات المطلوبة <span className="muted font-normal">(يمكنك اختيار أكثر من واحدة)</span>
+            {t.servicesLabel} <span className="muted font-normal">{t.servicesHint}</span>
           </label>
           <div className="flex flex-col gap-2">
             {services.map((s) => {
@@ -123,9 +125,9 @@ export default function BookingForm({ slug, barbers, services, showProviderChoic
                     <span className="font-bold">{s.name}</span>
                   </span>
                   <span className="muted text-sm">
-                    ~{s.duration} د
+                    ~{s.duration} {t.minUnit}
                     {showPrices && s.price > 0 && (
-                      <span style={{ color: "var(--accent)" }}> · {s.price} ريال</span>
+                      <span style={{ color: "var(--accent)" }}> · {s.price} {t.currency}</span>
                     )}
                   </span>
                 </label>
@@ -134,8 +136,8 @@ export default function BookingForm({ slug, barbers, services, showProviderChoic
           </div>
           {totalMin > 0 && (
             <p className="text-sm font-bold" style={{ color: "var(--accent)" }}>
-              الإجمالي التقريبي: ~{totalMin} دقيقة
-              {showPrices && totalPrice > 0 && ` · ${totalPrice} ريال`}
+              {t.totalApprox.replace("{m}", String(totalMin))}
+              {showPrices && totalPrice > 0 && ` · ${totalPrice} ${t.currency}`}
             </p>
           )}
         </div>
@@ -143,9 +145,9 @@ export default function BookingForm({ slug, barbers, services, showProviderChoic
 
       {showProviderChoice && (
         <div className="flex flex-col gap-2">
-          <label className="font-bold text-sm">اختر مزوّد الخدمة</label>
+          <label className="font-bold text-sm">{t.chooseProvider}</label>
           <select name="barberId" defaultValue="" className="input-field px-4 py-3 text-lg">
-            <option value="">أول متاح (الأسرع)</option>
+            <option value="">{t.firstAvailable}</option>
             {barbers.map((b) => (
               <option key={b.id} value={b.id}>
                 {b.name}
@@ -159,7 +161,7 @@ export default function BookingForm({ slug, barbers, services, showProviderChoic
       {!allowScheduling && <input type="hidden" name="whenMode" value="now" />}
       {allowScheduling && (
       <div className="flex flex-col gap-2">
-        <label className="font-bold text-sm">وقت حضورك</label>
+        <label className="font-bold text-sm">{t.whenTitle}</label>
         <input type="hidden" name="whenMode" value={whenMode} />
         <div className="grid grid-cols-2 gap-2">
           <button
@@ -171,7 +173,7 @@ export default function BookingForm({ slug, barbers, services, showProviderChoic
               background: whenMode === "now" ? "var(--surface-2)" : "transparent",
             }}
           >
-            الآن مباشرة
+            {t.now}
           </button>
           <button
             type="button"
@@ -182,23 +184,21 @@ export default function BookingForm({ slug, barbers, services, showProviderChoic
               background: whenMode === "scheduled" ? "var(--surface-2)" : "transparent",
             }}
           >
-            موعد محدّد
+            {t.scheduled}
           </button>
         </div>
         {whenMode === "scheduled" && (
           <div className="flex flex-col gap-2 mt-1">
             <input type="hidden" name="scheduledTime" value={slotTime} />
             {slots.length === 0 ? (
-              <p className="muted text-sm text-center py-3">
-                لا تتوفّر مواعيد اليوم — اختر «الآن مباشرة».
-              </p>
+              <p className="muted text-sm text-center py-3">{t.noSlots}</p>
             ) : !hasFreeSlot ? (
               <p className="text-sm text-center py-3 font-bold" style={{ color: "var(--accent)" }}>
-                كل مواعيد اليوم محجوزة — جرّب «الآن مباشرة».
+                {t.allBooked}
               </p>
             ) : (
               <>
-                <p className="muted text-xs">اختر موعداً متاحاً (المحجوزة معطّلة):</p>
+                <p className="muted text-xs">{t.chooseSlot}</p>
                 <div className="grid grid-cols-3 gap-2 max-h-60 overflow-y-auto p-1">
                   {slots.map((s) => {
                     const on = slotTime === s.time;
@@ -230,7 +230,7 @@ export default function BookingForm({ slug, barbers, services, showProviderChoic
                 </div>
                 {slotTime && (
                   <p className="text-sm font-bold text-center" style={{ color: "var(--accent)" }}>
-                    موعدك: {slots.find((s) => s.time === slotTime)?.label}
+                    {t.yourAppt.replace("{label}", slots.find((s) => s.time === slotTime)?.label ?? "")}
                   </p>
                 )}
               </>
@@ -244,7 +244,7 @@ export default function BookingForm({ slug, barbers, services, showProviderChoic
         <p className="text-red-400 text-sm font-bold text-center">{state.error}</p>
       )}
 
-      <SubmitButton />
+      <SubmitButton t={t} />
     </form>
   );
 }

@@ -8,8 +8,8 @@ export interface SlotOption {
   past: boolean; // مضى وقتها اليوم
 }
 
-function label12h(h24: number, m: number): string {
-  const period = h24 < 12 ? "ص" : "م";
+function label12h(h24: number, m: number, am: string, pm: string): string {
+  const period = h24 < 12 ? am : pm;
   let h = h24 % 12;
   if (h === 0) h = 12;
   return `${h}:${String(m).padStart(2, "0")} ${period}`;
@@ -27,7 +27,11 @@ interface ShopForSlots {
 
 // يولّد خانات المواعيد لليوم الحالي مع حالة توفّر كل خانة.
 // سعة الخانة = عدد مزوّدي الخدمة النشطين؛ خانة محجوزة بالكامل أو ماضية = غير متاحة.
-export async function availableSlotsFor(shop: ShopForSlots): Promise<SlotOption[]> {
+export async function availableSlotsFor(
+  shop: ShopForSlots,
+  am = "ص",
+  pm = "م"
+): Promise<SlotOption[]> {
   const open = shop.settings?.openTime ?? "09:00";
   const close = shop.settings?.closeTime ?? "22:00";
   const step = shop.settings?.slotMinutes ?? 30;
@@ -80,7 +84,7 @@ export async function availableSlotsFor(shop: ShopForSlots): Promise<SlotOption[
     const used = counts.get(hhmm) ?? 0;
     slots.push({
       time: hhmm,
-      label: label12h(h, m),
+      label: label12h(h, m, am, pm),
       available: !past && used < capacity,
       past,
     });

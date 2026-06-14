@@ -1,12 +1,7 @@
-// ترجمات صفحة الهبوط — العربية افتراضية، والباقي يختاره الزائر من المبدّل
-export type Locale = "ar" | "en" | "hi" | "bn";
-
-export const LOCALES: { code: Locale; label: string; short: string; rtl: boolean }[] = [
-  { code: "ar", label: "العربية", short: "ع", rtl: true },
-  { code: "en", label: "English", short: "EN", rtl: false },
-  { code: "hi", label: "हिन्दी", short: "हि", rtl: false },
-  { code: "bn", label: "বাংলা", short: "বাং", rtl: false },
-];
+// ترجمات صفحة الهبوط — تعتمد نواة الترجمة المشتركة
+export { LOCALES } from "@/lib/i18n";
+export type { Locale } from "@/lib/i18n";
+import type { Locale } from "@/lib/i18n";
 
 export interface Strings {
   brand: string;
