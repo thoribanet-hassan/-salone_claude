@@ -168,6 +168,90 @@ body {
   }
 }
 
+/* ====== صفحة الهبوط ====== */
+.landing-hero-bg {
+  background:
+    radial-gradient(70% 55% at 50% -5%, color-mix(in srgb, var(--accent) 16%, transparent), transparent 70%),
+    var(--bg);
+}
+.landing-cta-bg {
+  background: linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent) 70%, #000));
+  color: var(--accent-contrast);
+  border-radius: calc(var(--radius) * 1.6);
+}
+.badge-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface));
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  padding: 0.4rem 1rem;
+  font-weight: 700;
+  font-size: 0.82rem;
+}
+.feature-icon {
+  width: 3rem;
+  height: 3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 14px;
+  background: var(--surface-2);
+  font-size: 1.55rem;
+  flex-shrink: 0;
+}
+.step-num {
+  width: 2.6rem;
+  height: 2.6rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-contrast);
+  font-weight: 800;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+.chip {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.5rem 1.1rem;
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+/* محاكاة شاشة الجوال في الـ hero */
+.phone-frame {
+  border: 8px solid var(--text);
+  border-radius: 2.4rem;
+  background: var(--bg);
+  padding: 0.9rem;
+  box-shadow: 0 30px 60px -25px color-mix(in srgb, var(--accent) 45%, transparent);
+}
+.fade-up {
+  animation: fade-up 0.7s ease both;
+}
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.float-soft {
+  animation: float-soft 4.5s ease-in-out infinite;
+}
+@keyframes float-soft {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fade-up,
+  .float-soft {
+    animation: none;
+  }
+}
+
 /* ====== الطباعة: يُطبع QR فقط (منطقة qr-print-area) دون بقية الصفحة ====== */
 @media print {
   body,
