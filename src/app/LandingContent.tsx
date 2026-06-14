@@ -293,9 +293,12 @@ export default function LandingContent({ banner }: { banner: ReactNode }) {
         </div>
       </section>
 
-      <footer className="px-6 py-8 text-center">
+      <footer className="px-6 py-8 text-center flex flex-col items-center gap-2">
         <p className="font-extrabold" style={{ color: "var(--accent)" }}>{s.brand}</p>
-        <p className="muted text-sm mt-1">{s.footerTagline}</p>
+        <p className="muted text-sm">{s.footerTagline}</p>
+        <Link href="/guide" className="text-sm no-underline" style={{ color: "var(--accent)" }}>
+          📖 {locale === "ar" ? "دليل الاستخدام" : locale === "en" ? "User guide" : locale === "hi" ? "उपयोग गाइड" : "ব্যবহার গাইড"}
+        </Link>
       </footer>
     </div>
   );
