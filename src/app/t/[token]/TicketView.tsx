@@ -311,16 +311,31 @@ export default function TicketView({
       const ctx = ctxRef.current;
       if (!ctx) return;
       const { remainingMinutes, peopleAhead } = liveRef.current;
-      playPattern(ctx, reminderPatternFor(remainingMinutes, peopleAhead));
+      const pattern = reminderPatternFor(remainingMinutes, peopleAhead);
+      playPattern(ctx, pattern);
+      // اهتزاز مرافق يتصاعد مع النغمة كلما اقترب الدور
+      if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+        const buzz =
+          pattern.count >= 3
+            ? [300, 120, 300, 120, 300]
+            : pattern.count === 2
+              ? [250, 120, 250]
+              : [220];
+        navigator.vibrate?.(buzz);
+      }
     }, REMINDER_MS);
     return () => clearInterval(id);
   }, [soundOn, state.status]);
 
-  // نغمة "حان دورك" المميّزة عند انتقال الحالة إلى serving
+  // نغمة "حان دورك" المميّزة عند انتقال الحالة إلى serving — مع اهتزاز قوي مرافق
   // + تنبيه قوي عند تخطّي الدور (لم يحضر عند مناداته)
   useEffect(() => {
-    if (prevStatusRef.current !== "serving" && state.status === "serving" && soundOn && ctxRef.current) {
-      playTurnChime(ctxRef.current);
+    if (prevStatusRef.current !== "serving" && state.status === "serving") {
+      if (soundOn && ctxRef.current) playTurnChime(ctxRef.current);
+      // اهتزاز قوي مرافق لأهم لحظة — يعمل حتى لو كان الصوت مكتوماً
+      if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+        navigator.vibrate?.([400, 150, 400, 150, 600]);
+      }
     }
     if (prevStatusRef.current !== "skipped" && state.status === "skipped") {
       if (soundOn && ctxRef.current) {
