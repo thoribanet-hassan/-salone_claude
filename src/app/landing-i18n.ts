@@ -48,8 +48,8 @@ export const T: Record<Locale, Strings> = {
     howTitle: "كيف يعمل؟",
     howLead: "ثلاث خطوات — وتكون جاهزاً",
     steps: [
-      { title: "علّق رمز QR", body: "يحصل محلك على رمز QR وملصق جاهز للطباعة في دقيقة واحدة." },
-      { title: "الزبون يمسح ويحجز", body: "يدخل اسمه ويأخذ رقمه في الطابور من جوّاله — بدون أي تطبيق." },
+      { title: "علّقه أو شاركه في أي مكان", body: "ملصق QR جاهز للطباعة في دقيقة لواجهة محلك — أو أرسل الرمز ورابط الحجز عبر واتساب وصفحاتك وأي مكان، ليحجز عملاؤك عن بُعد." },
+      { title: "يمسح ويحجز بلا تطبيق", body: "يمسح الرمز أو يفتح الرابط من جوّاله بلا أي تطبيق، ويأخذ دوره الآن أو يختار موعداً في ساعة تناسبه." },
       { title: "ينتظر بحرّية ويُنبَّه", body: "يتابع دوره من جوّاله، وننبّهه بالصوت والإشعار عند اقترابه." },
     ],
     whyTitle: "لماذا دورك؟",
@@ -86,8 +86,8 @@ export const T: Record<Locale, Strings> = {
     howTitle: "How it works",
     howLead: "Three steps — and you're ready",
     steps: [
-      { title: "Put up the QR", body: "Your shop gets a QR code and a print-ready poster in one minute." },
-      { title: "Customer scans & books", body: "They enter their name and take a queue number from their phone — no app." },
+      { title: "Hang it or share it anywhere", body: "A print-ready QR poster in one minute for your storefront — or send the code and booking link via WhatsApp, your page, anywhere, so customers book remotely." },
+      { title: "Scan & book — no app", body: "They scan the code or open the link from their phone with no app, and take their turn now or pick a time that suits them." },
       { title: "They wait freely & get alerted", body: "They follow their turn from their phone; we alert them by sound and notification as it nears." },
     ],
     whyTitle: "Why Dawrak?",
@@ -124,8 +124,8 @@ export const T: Record<Locale, Strings> = {
     howTitle: "यह कैसे काम करता है?",
     howLead: "तीन चरण — और आप तैयार हैं",
     steps: [
-      { title: "QR लगाएँ", body: "आपकी दुकान को एक मिनट में QR कोड और प्रिंट-तैयार पोस्टर मिलता है।" },
-      { title: "ग्राहक स्कैन करके बुक करता है", body: "वे अपना नाम डालते हैं और फ़ोन से कतार नंबर लेते हैं — कोई ऐप नहीं।" },
+      { title: "लगाएँ या कहीं भी साझा करें", body: "आपके स्टोरफ्रंट के लिए एक मिनट में प्रिंट-तैयार QR पोस्टर — या कोड और बुकिंग लिंक व्हाट्सएप, अपने पेज, कहीं भी भेजें, ताकि ग्राहक दूर से बुक करें।" },
+      { title: "स्कैन करें और बुक करें — कोई ऐप नहीं", body: "वे बिना किसी ऐप के फ़ोन से कोड स्कैन करते हैं या लिंक खोलते हैं, और अभी बारी लेते हैं या अपने अनुकूल समय चुनते हैं।" },
       { title: "वे आराम से प्रतीक्षा करते हैं और सूचना पाते हैं", body: "वे फ़ोन से अपनी बारी देखते हैं; पास आने पर हम ध्वनि व सूचना से सचेत करते हैं।" },
     ],
     whyTitle: "दौरक क्यों?",
@@ -162,8 +162,8 @@ export const T: Record<Locale, Strings> = {
     howTitle: "এটি কীভাবে কাজ করে?",
     howLead: "তিন ধাপ — আর আপনি প্রস্তুত",
     steps: [
-      { title: "QR লাগান", body: "আপনার দোকান এক মিনিটে একটি QR কোড ও প্রিন্ট-প্রস্তুত পোস্টার পায়।" },
-      { title: "গ্রাহক স্ক্যান করে বুক করে", body: "তারা নাম লিখে ফোন থেকে সারির নম্বর নেয় — কোনো অ্যাপ ছাড়াই।" },
+      { title: "লাগান বা যেকোনো জায়গায় শেয়ার করুন", body: "আপনার দোকানের জন্য এক মিনিটে প্রিন্ট-প্রস্তুত QR পোস্টার — অথবা কোড ও বুকিং লিংক হোয়াটসঅ্যাপ, আপনার পেজ, যেকোনো জায়গায় পাঠান, যাতে গ্রাহক দূর থেকে বুক করে।" },
+      { title: "স্ক্যান করে বুক করুন — কোনো অ্যাপ নয়", body: "তারা কোনো অ্যাপ ছাড়াই ফোন থেকে কোড স্ক্যান করে বা লিংক খোলে, আর এখনই নিজের পালা নেয় বা সুবিধামতো সময় বেছে নেয়।" },
       { title: "তারা স্বাধীনভাবে অপেক্ষা করে ও বিজ্ঞপ্তি পায়", body: "তারা ফোন থেকে নিজের পালা দেখে; কাছে এলে আমরা শব্দ ও বিজ্ঞপ্তিতে জানাই।" },
     ],
     whyTitle: "কেন দাওরাক?",
