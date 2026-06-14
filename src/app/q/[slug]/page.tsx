@@ -10,7 +10,7 @@ export default async function QrPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const shop = await prisma.shop.findUnique({ where: { slug } });
+  const shop = await prisma.shop.findUnique({ where: { slug }, include: { settings: true } });
   if (!shop) notFound();
 
   const theme = themeFor(shop.facilityType);
@@ -48,7 +48,14 @@ export default async function QrPage({
           <p className="muted text-xs">رمز المحل: {shop.shopCode}</p>
         </div>
 
-        <QrActions slug={slug} shopName={shop.name} joinUrl={joinUrl} />
+        <QrActions
+          slug={slug}
+          shopName={shop.name}
+          joinUrl={joinUrl}
+          remoteUrl={joinUrlFor(slug, "remote")}
+          whatsappUrl={joinUrlFor(slug, "whatsapp")}
+          allowScheduling={!!shop.settings?.allowScheduling}
+        />
       </div>
     </main>
   );

@@ -211,10 +211,12 @@ export default async function DashboardPage() {
           </section>
         )}
 
-        {/* رمز QR للمحل — للطباعة والتعليق والمشاركة */}
+        {/* طرق دعوة العملاء للحجز — ملصق المحل + المشاركة عن بُعد */}
         <section className="surface p-5 flex flex-col items-center gap-3">
-          <h2 className="font-extrabold self-start no-print">رمز QR للمحل</h2>
-          <p className="muted text-sm self-start -mt-2 no-print">علّقه في الواجهة بعد طباعته، أو شاركه عبر واتساب وصفحتك.</p>
+          <h2 className="font-extrabold self-start no-print">طرق دعوة عملائك للحجز</h2>
+          <p className="muted text-sm self-start -mt-2 no-print">
+            علّق الملصق في الواجهة للحاضرين، وأرسل الرابط لعملائك ليحجزوا عن بُعد — وتعرف من أين يأتي كل عميل.
+          </p>
           {/* المنطقة القابلة للطباعة وحدها */}
           <div className="qr-print-area flex flex-col items-center gap-3 py-2">
             <p className="font-extrabold text-lg">{shop.name}</p>
@@ -224,7 +226,14 @@ export default async function DashboardPage() {
             </div>
             <p className="font-bold">امسح وادخل لحجز دورك</p>
           </div>
-          <QrActions slug={shop.slug} shopName={shop.name} joinUrl={joinUrl} />
+          <QrActions
+            slug={shop.slug}
+            shopName={shop.name}
+            joinUrl={joinUrl}
+            remoteUrl={joinUrlFor(shop.slug, "remote")}
+            whatsappUrl={joinUrlFor(shop.slug, "whatsapp")}
+            allowScheduling={!!shop.settings?.allowScheduling}
+          />
         </section>
 
         {/* لوحة التحكم الموحّدة — كل خصائص المنشأة تُفعَّل وتُختار من هنا */}

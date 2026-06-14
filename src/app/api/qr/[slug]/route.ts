@@ -14,7 +14,8 @@ export async function GET(
   const shop = await prisma.shop.findUnique({ where: { slug }, select: { id: true } });
   if (!shop) return NextResponse.json({ error: "not found" }, { status: 404 });
 
-  const url = joinUrlFor(slug);
+  // ملصق المحل: مسحه = دخول من داخل المنشأة (يُوسَم in_store للقياس)
+  const url = joinUrlFor(slug, "in_store");
   const opts = { margin: 2, errorCorrectionLevel: "M" as const, width: 1024 };
 
   if (format === "png") {

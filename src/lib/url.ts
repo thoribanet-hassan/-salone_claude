@@ -7,7 +7,9 @@ export function appBaseUrl(): string {
   ).replace(/\/$/, "");
 }
 
-// رابط انضمام الزبون الثابت للمحل — هو ما يُشفَّر داخل الـ QR
-export function joinUrlFor(slug: string): string {
-  return `${appBaseUrl()}/j/${slug}`;
+// رابط انضمام الزبون للمحل. مع source يُوسَم مصدر الدخول (in_store/whatsapp/remote)
+// لتظهر قنوات الجلب مفصّلة في لوحة المؤسس
+export function joinUrlFor(slug: string, source?: string): string {
+  const base = `${appBaseUrl()}/j/${slug}`;
+  return source ? `${base}?source=${source}` : base;
 }
