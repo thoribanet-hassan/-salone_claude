@@ -2,6 +2,10 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { themeFor } from "@/lib/theme";
 import { joinUrlFor } from "@/lib/url";
+import { getServerLocale } from "@/lib/locale-server";
+import { dirFor, fontVarFor } from "@/lib/i18n";
+import { CHANNELS } from "@/i18n/misc";
+import LangSwitcher from "@/components/LangSwitcher";
 import QrActions from "./QrActions";
 
 export default async function QrPage({
@@ -15,10 +19,20 @@ export default async function QrPage({
 
   const theme = themeFor(shop.facilityType);
   const joinUrl = joinUrlFor(slug);
+  const locale = await getServerLocale();
+  const t = CHANNELS[locale];
 
   return (
-    <main className={`${theme.className} min-h-screen flex flex-col items-center px-5 py-8`}>
+    <main
+      className={`${theme.className} min-h-screen flex flex-col items-center px-5 py-8`}
+      dir={dirFor(locale)}
+      lang={locale}
+      style={{ fontFamily: fontVarFor(locale) }}
+    >
       <div className="w-full max-w-md flex flex-col gap-6 items-center">
+        <div className="no-print">
+          <LangSwitcher current={locale} />
+        </div>
         {/* الملصق القابل للطباعة والتعليق في المحل */}
         <div id="poster" className="qr-print-area surface w-full p-8 flex flex-col items-center gap-5 text-center">
           <div>
@@ -40,18 +54,19 @@ export default async function QrPage({
 
           <div>
             <p className="text-2xl font-extrabold" style={{ color: "var(--accent)" }}>
-              امسح وادخل لحجز دورك
+              {t.posterScan}
             </p>
-            <p className="muted mt-1">بدون أي تطبيق — من متصفح جوالك مباشرةً</p>
+            <p className="muted mt-1">{t.posterNoApp}</p>
           </div>
 
-          <p className="muted text-xs">رمز المحل: {shop.shopCode}</p>
+          <p className="muted text-xs">{t.posterShopCode} {shop.shopCode}</p>
         </div>
 
         <QrActions
           slug={slug}
           shopName={shop.name}
           joinUrl={joinUrl}
+          t={t}
           remoteUrl={joinUrlFor(slug, "remote")}
           whatsappUrl={joinUrlFor(slug, "whatsapp")}
           allowScheduling={!!shop.settings?.allowScheduling}

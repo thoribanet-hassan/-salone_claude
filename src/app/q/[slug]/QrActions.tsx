@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import type { ChannelsMsgs } from "@/i18n/misc";
 
 interface Props {
   slug: string;
@@ -9,6 +10,7 @@ interface Props {
   remoteUrl: string; // رابط الحجز عن بُعد (?source=remote)
   whatsappUrl: string; // رابط واتساب (?source=whatsapp)
   allowScheduling: boolean;
+  t: ChannelsMsgs;
 }
 
 export default function QrActions({
@@ -18,6 +20,7 @@ export default function QrActions({
   remoteUrl,
   whatsappUrl,
   allowScheduling,
+  t,
 }: Props) {
   const [copied, setCopied] = useState(false);
 
@@ -31,11 +34,14 @@ export default function QrActions({
     }
   };
 
-  const timePhrase = allowScheduling ? "الآن أو في الوقت الذي يناسبك" : "بسهولة من جوالك";
+  const timePhrase = allowScheduling ? t.timeSched : t.timeNo;
 
   // مشاركة عبر واتساب المنشأة — رسالة جاهزة تدعو للحجز عن بُعد
   const shareWhatsApp = () => {
-    const text = `مرحباً 👋\nاحجز دورك في ${shopName} ${timePhrase} — بدون أي تطبيق، من جوالك مباشرةً:\n${whatsappUrl}`;
+    const text = t.whatsappMsg
+      .replace("{shop}", shopName)
+      .replace("{time}", timePhrase)
+      .replace("{url}", whatsappUrl);
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
   };
 
@@ -44,7 +50,7 @@ export default function QrActions({
       try {
         await navigator.share({
           title: shopName,
-          text: `احجز دورك في ${shopName} ${timePhrase}`,
+          text: t.nativeText.replace("{shop}", shopName).replace("{time}", timePhrase),
           url: remoteUrl,
         });
       } catch {
@@ -59,47 +65,42 @@ export default function QrActions({
     <div className="no-print flex flex-col gap-4 w-full">
       {/* القناة 1: داخل المحل (الملصق) */}
       <div className="surface p-4 flex flex-col gap-3">
-        <p className="font-extrabold text-sm">🏪 في المحل — ملصق QR للواجهة</p>
-        <p className="muted text-xs -mt-1">
-          علّقه عند المدخل؛ الزبون الحاضر يمسحه ويأخذ دوره فوراً.
-        </p>
+        <p className="font-extrabold text-sm">{t.inStoreTitle}</p>
+        <p className="muted text-xs -mt-1">{t.inStoreBody}</p>
         <div className="grid grid-cols-2 gap-3">
           <a
             href={`/api/qr/${slug}?format=svg`}
             download={`qr-${slug}.svg`}
             className="btn-accent text-center py-3 text-sm"
           >
-            تنزيل SVG
+            {t.downloadSvg}
           </a>
           <a
             href={`/api/qr/${slug}?format=png`}
             download={`qr-${slug}.png`}
             className="btn-accent text-center py-3 text-sm"
           >
-            تنزيل PNG
+            {t.downloadPng}
           </a>
         </div>
         <button onClick={() => window.print()} className="surface py-3 font-bold text-sm">
-          🖨️ طباعة الملصق
+          {t.printPoster}
         </button>
       </div>
 
       {/* القناة 2: عن بُعد (مشاركة الرابط) */}
       <div className="surface p-4 flex flex-col gap-3">
-        <p className="font-extrabold text-sm">📲 عن بُعد — ادعُ عملاءك للحجز</p>
-        <p className="muted text-xs -mt-1">
-          أرسل رابط الحجز لعملائك ليحجزوا دورهم {allowScheduling ? "ويختاروا موعداً مناسباً " : ""}
-          قبل وصولهم — يصلهم تنبيه عند اقتراب دورهم.
-        </p>
+        <p className="font-extrabold text-sm">{t.remoteTitle}</p>
+        <p className="muted text-xs -mt-1">{allowScheduling ? t.remoteBodySched : t.remoteBodyNo}</p>
         <button onClick={shareWhatsApp} className="btn-accent py-3 font-bold text-sm">
-          🟢 مشاركة عبر واتساب
+          {t.shareWhatsapp}
         </button>
         <div className="grid grid-cols-2 gap-3">
           <button onClick={nativeShare} className="surface py-3 font-bold text-sm">
-            مشاركة…
+            {t.shareNative}
           </button>
           <button onClick={copyRemote} className="surface py-3 font-bold text-sm">
-            {copied ? "✓ تم النسخ" : "نسخ رابط الحجز"}
+            {copied ? t.copied : t.copyLink}
           </button>
         </div>
         <p className="muted text-center text-xs break-all">{joinUrl}</p>

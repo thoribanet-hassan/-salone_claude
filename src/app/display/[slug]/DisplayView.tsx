@@ -2,6 +2,9 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { playTurnChime } from "@/lib/sound";
+import LangSwitcher from "@/components/LangSwitcher";
+import type { Locale } from "@/lib/i18n";
+import type { DisplayMsgs } from "@/i18n/misc";
 
 interface State {
   found: boolean;
@@ -16,7 +19,17 @@ interface State {
 
 const POLL_MS = 5000;
 
-export default function DisplayView({ slug, initial }: { slug: string; initial: State }) {
+export default function DisplayView({
+  slug,
+  initial,
+  t,
+  locale,
+}: {
+  slug: string;
+  initial: State;
+  t: DisplayMsgs;
+  locale: Locale;
+}) {
   const [state, setState] = useState<State>(initial);
   const [online, setOnline] = useState(true);
   const [soundOn, setSoundOn] = useState(false);
@@ -93,41 +106,44 @@ export default function DisplayView({ slug, initial }: { slug: string; initial: 
           <p className="muted text-lg md:text-2xl">{s.facilityLabel}</p>
           <h1 className="text-3xl md:text-5xl font-extrabold">{s.shopName}</h1>
         </div>
-        <button
-          onClick={toggleSound}
-          className="surface px-4 py-2 text-sm md:text-base font-bold"
-          aria-pressed={soundOn}
-          title="نغمة عند نداء رقم جديد"
-        >
-          {soundOn ? "🔔 الصوت مُفعّل" : "🔕 فعّل الصوت"}
-        </button>
+        <div className="flex items-center gap-2">
+          <LangSwitcher current={locale} />
+          <button
+            onClick={toggleSound}
+            className="surface px-4 py-2 text-sm md:text-base font-bold"
+            aria-pressed={soundOn}
+            title={t.soundTitle}
+          >
+            {soundOn ? t.soundOn : t.soundOff}
+          </button>
+        </div>
       </header>
 
       {!online && (
         <div className="text-center text-base font-bold py-2 rounded-lg mb-4"
           style={{ background: "var(--surface-2)", color: "var(--text-muted)" }}>
-          إعادة الاتصال…
+          {t.reconnecting}
         </div>
       )}
 
       {/* الآن يُخدَم */}
       <section className="flex-1 flex flex-col">
         <p className="text-xl md:text-3xl font-bold mb-4" style={{ color: "var(--accent)" }}>
-          الآن يُخدَم
+          {t.nowServing}
         </p>
         {s.serving.length === 0 ? (
           <div className="surface flex-1 flex items-center justify-center min-h-[30vh]">
             <p className="muted text-2xl md:text-4xl font-bold">
-              {s.isOpen ? "بانتظار نداء الدور التالي" : "الاستقبال متوقف حالياً"}
+              {s.isOpen ? t.waitingNext : t.closed}
             </p>
           </div>
         ) : (
           <div className="grid gap-5 flex-1" style={{ gridTemplateColumns: `repeat(auto-fit, minmax(min(100%, 320px), 1fr))` }}>
-            {s.serving.map((t) => {
-              const isFresh = flash.has(t.number);
+            {s.serving.map((srv) => {
+              const isFresh = flash.has(srv.number);
               return (
                 <div
-                  key={t.number}
+                  key={srv.number}
                   className="surface flex flex-col items-center justify-center py-10 stage-card"
                   style={
                     isFresh
@@ -135,11 +151,11 @@ export default function DisplayView({ slug, initial }: { slug: string; initial: 
                       : undefined
                   }
                 >
-                  <p className="text-2xl md:text-4xl font-bold mb-2">رقم</p>
+                  <p className="text-2xl md:text-4xl font-bold mb-2">{t.numberWord}</p>
                   <p className="font-extrabold leading-none" style={{ fontSize: "clamp(5rem, 18vw, 14rem)", color: isFresh ? "var(--accent-contrast)" : "var(--accent)" }}>
-                    {t.number}
+                    {srv.number}
                   </p>
-                  {t.barber && <p className="text-2xl md:text-3xl font-bold mt-3">{t.barber}</p>}
+                  {srv.barber && <p className="text-2xl md:text-3xl font-bold mt-3">{srv.barber}</p>}
                 </div>
               );
             })}
@@ -150,7 +166,7 @@ export default function DisplayView({ slug, initial }: { slug: string; initial: 
       {/* القادمون */}
       {s.waiting.length > 0 && (
         <section className="mt-6">
-          <p className="text-lg md:text-2xl font-bold mb-3 muted">القادمون</p>
+          <p className="text-lg md:text-2xl font-bold mb-3 muted">{t.coming}</p>
           <div className="flex flex-wrap gap-3">
             {s.waiting.map((n, i) => (
               <div
@@ -168,7 +184,7 @@ export default function DisplayView({ slug, initial }: { slug: string; initial: 
         </section>
       )}
 
-      <p className="muted text-center text-sm mt-6">تتحدّث الشاشة تلقائياً — مدعوم بنظام «دورك»</p>
+      <p className="muted text-center text-sm mt-6">{t.autoUpdate}</p>
     </div>
   );
 }

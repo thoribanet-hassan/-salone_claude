@@ -11,6 +11,7 @@ import { getServerLocale } from "@/lib/locale-server";
 import { dirFor, fontVarFor } from "@/lib/i18n";
 import { DASH, type DashMsgs } from "@/i18n/dashboard";
 import { SERVE } from "@/i18n/serve";
+import { CHANNELS } from "@/i18n/misc";
 import LangSwitcher from "@/components/LangSwitcher";
 import {
   addBarberAction,
@@ -251,6 +252,7 @@ export default async function DashboardPage() {
             slug={shop.slug}
             shopName={shop.name}
             joinUrl={joinUrl}
+            t={CHANNELS[locale]}
             remoteUrl={joinUrlFor(shop.slug, "remote")}
             whatsappUrl={joinUrlFor(shop.slug, "whatsapp")}
             allowScheduling={!!shop.settings?.allowScheduling}
