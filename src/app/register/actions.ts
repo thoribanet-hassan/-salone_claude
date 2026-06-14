@@ -4,6 +4,8 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { hashPassword, setSession } from "@/lib/auth";
 import { arabicToSlug, uniqueSlug, generateShopCode } from "@/lib/shop";
+import { getServerLocale } from "@/lib/locale-server";
+import { AUTH } from "@/i18n/auth";
 import type { FacilityType } from "@prisma/client";
 
 export interface RegisterState {
@@ -42,14 +44,15 @@ export async function registerAction(
   const facilityLabel = String(formData.get("facilityLabel") ?? "").trim();
   const timezone = String(formData.get("timezone") ?? "Asia/Riyadh") || "Asia/Riyadh";
 
+  const e = AUTH[await getServerLocale()];
   if (!shopName || !ownerName || !email || !password || !facilityLabel)
-    return { error: "يرجى تعبئة كل الحقول" };
-  if (password.length < 6) return { error: "كلمة المرور 6 أحرف على الأقل" };
+    return { error: e.regErrFields };
+  if (password.length < 6) return { error: e.regErrPassword };
 
   const facilityType = inferFacilityType(facilityLabel);
 
   const existing = await prisma.user.findUnique({ where: { email } });
-  if (existing) return { error: "هذا البريد مسجّل مسبقاً" };
+  if (existing) return { error: e.regErrEmailTaken };
 
   const slug = await uniqueSlug(arabicToSlug(shopName));
   const shopCode = await generateShopCode();

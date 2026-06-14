@@ -3,52 +3,53 @@
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { registerAction, type RegisterState } from "./actions";
+import type { AuthMsgs } from "@/i18n/auth";
 
-function SubmitButton() {
+function SubmitButton({ t }: { t: AuthMsgs }) {
   const { pending } = useFormStatus();
   return (
     <button type="submit" disabled={pending} className="btn-accent w-full py-4 text-lg mt-2">
-      {pending ? "جارٍ الإنشاء…" : "إنشاء المنشأة والدخول"}
+      {pending ? t.regSubmitting : t.regSubmit}
     </button>
   );
 }
 
-export default function RegisterForm() {
+export default function RegisterForm({ t }: { t: AuthMsgs }) {
   const [state, formAction] = useActionState<RegisterState, FormData>(registerAction, {});
 
   return (
     <form action={formAction} className="flex flex-col gap-4">
       <div className="flex flex-col gap-2">
-        <label className="font-bold text-sm">نوع المنشأة</label>
+        <label className="font-bold text-sm">{t.regType}</label>
         <input
           name="facilityLabel"
           required
-          placeholder="اكتب نوعها: حلاق، صالون نسائي، مطعم، عيادة، كوفي، مستوصف…"
+          placeholder={t.regTypePh}
           className="input-field px-4 py-3 text-lg"
         />
       </div>
 
       <div className="flex flex-col gap-2">
-        <label className="font-bold text-sm">اسم المنشأة</label>
-        <input name="shopName" required placeholder="مثال: صالون النخبة / مطعم الذوّاقة" className="input-field px-4 py-3 text-lg" />
+        <label className="font-bold text-sm">{t.regShopName}</label>
+        <input name="shopName" required placeholder={t.regShopNamePh} className="input-field px-4 py-3 text-lg" />
       </div>
-      <p className="muted text-xs -mt-2">كل التفاصيل الأخرى (الموظفون، نظام الزمن، المواعيد…) تُضبط لاحقاً من لوحة التحكم.</p>
+      <p className="muted text-xs -mt-2">{t.regHint}</p>
       <div className="flex flex-col gap-2">
-        <label className="font-bold text-sm">اسم المالك</label>
-        <input name="ownerName" required placeholder="اسمك" className="input-field px-4 py-3 text-lg" />
-      </div>
-      <div className="flex flex-col gap-2">
-        <label className="font-bold text-sm">البريد الإلكتروني (للدخول)</label>
-        <input name="email" type="email" required placeholder="you@example.com" className="input-field px-4 py-3 text-lg" />
+        <label className="font-bold text-sm">{t.regOwner}</label>
+        <input name="ownerName" required placeholder={t.regOwnerPh} className="input-field px-4 py-3 text-lg" />
       </div>
       <div className="flex flex-col gap-2">
-        <label className="font-bold text-sm">كلمة المرور</label>
-        <input name="password" type="password" required minLength={6} placeholder="٦ أحرف على الأقل" className="input-field px-4 py-3 text-lg" />
+        <label className="font-bold text-sm">{t.regEmail}</label>
+        <input name="email" type="email" required placeholder={t.regEmailPh} className="input-field px-4 py-3 text-lg" />
+      </div>
+      <div className="flex flex-col gap-2">
+        <label className="font-bold text-sm">{t.regPassword}</label>
+        <input name="password" type="password" required minLength={6} placeholder={t.regPasswordPh} className="input-field px-4 py-3 text-lg" />
       </div>
 
       {state.error && <p className="text-red-400 text-sm font-bold text-center">{state.error}</p>}
 
-      <SubmitButton />
+      <SubmitButton t={t} />
     </form>
   );
 }
