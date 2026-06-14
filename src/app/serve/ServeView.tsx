@@ -10,6 +10,7 @@ import {
   markReadyAction,
   restoreAction,
 } from "./actions";
+import type { ServeMsgs } from "@/i18n/serve";
 
 interface Current {
   ticketNumber: number;
@@ -35,9 +36,11 @@ interface Props {
   current: Current | null;
   skipped?: Skipped[];
   embedded?: boolean; // داخل لوحة المدير: نخفي الترويسة والخروج
+  t: ServeMsgs;
 }
 
 export default function ServeView(props: Props) {
+  const t = props.t;
   const router = useRouter();
   const [pending, start] = useTransition();
   const [msg, setMsg] = useState<string | null>(null);
@@ -67,7 +70,7 @@ export default function ServeView(props: Props) {
           <h1 className="text-xl font-extrabold">{props.barberName}</h1>
           {props.role === "manager" && (
             <a href="/dashboard" className="muted text-xs underline">
-              ← لوحة التحكم
+              {t.backToDashboard}
             </a>
           )}
         </header>
@@ -75,7 +78,7 @@ export default function ServeView(props: Props) {
 
       {/* حالة الموظف */}
       <div className="surface p-4 flex items-center justify-between">
-        <span className="font-bold">حالتك</span>
+        <span className="font-bold">{t.yourStatus}</span>
         <button
           disabled={pending || isServing}
           onClick={() => run(() => toggleStatusAction(isAvailable ? "unavailable" : "available"))}
@@ -85,23 +88,23 @@ export default function ServeView(props: Props) {
             color: isAvailable ? "var(--accent-contrast)" : "var(--text-muted)",
           }}
         >
-          {props.status === "busy" ? "مشغول" : isAvailable ? "متاح ✓" : "غير متاح"}
+          {props.status === "busy" ? t.busy : isAvailable ? t.available : t.unavailable}
         </button>
       </div>
 
       {/* العميل الحالي */}
       {isServing ? (
         <div className="surface p-6 text-center" style={{ background: "var(--accent)", color: "var(--accent-contrast)" }}>
-          <p className="text-sm opacity-80">العميل الحالي</p>
+          <p className="text-sm opacity-80">{t.currentCustomer}</p>
           <p className="text-5xl font-extrabold my-1">#{props.current!.ticketNumber}</p>
           <p className="font-bold text-lg">{props.current!.customerName}</p>
           {props.current!.serviceName && <p className="text-sm opacity-90">{props.current!.serviceName}</p>}
         </div>
       ) : (
         <div className="surface p-6 text-center">
-          <p className="muted">لا يوجد عميل قيد الخدمة</p>
+          <p className="muted">{t.noCustomer}</p>
           <p className="text-3xl font-extrabold mt-2">{props.waitingCount}</p>
-          <p className="muted text-sm">في الانتظار</p>
+          <p className="muted text-sm">{t.waiting}</p>
         </div>
       )}
 
@@ -112,10 +115,10 @@ export default function ServeView(props: Props) {
         {isServing ? (
           <>
             <button disabled={pending} onClick={() => run(completeAction)} className="btn-accent py-5 text-xl">
-              ✓ إنهاء الخدمة
+              {t.complete}
             </button>
             <button disabled={pending} onClick={() => run(skipAction)} className="surface py-4 text-lg font-bold">
-              تخطّي العميل
+              {t.skip}
             </button>
           </>
         ) : (
@@ -124,7 +127,7 @@ export default function ServeView(props: Props) {
             onClick={() => run(callNextAction)}
             className="btn-accent py-6 text-2xl"
           >
-            العميل التالي ←
+            {t.callNext}
           </button>
         )}
 
@@ -132,14 +135,12 @@ export default function ServeView(props: Props) {
         {props.waitingCount > 0 && !props.noTimes && (
           <div className="surface p-4 mt-1">
             <p className="font-bold text-sm mb-3">
-              {props.isManual
-                ? "طاولة ستفرغ قريباً؟ حدّد الوقت ونبّه العميل التالي:"
-                : "أوشكت على الإنهاء؟ قلّص وقت العميل التالي (تصله نغمة):"}
+              {props.isManual ? t.readyManual : t.readyAuto}
             </p>
             <div className="flex items-center justify-between mb-2">
-              <span className="muted text-sm">الوقت</span>
+              <span className="muted text-sm">{t.time}</span>
               <span className="text-2xl font-extrabold" style={{ color: "var(--accent)" }}>
-                {readyMinutes} دقيقة
+                {readyMinutes} {t.minutesWord}
               </span>
             </div>
             <input
@@ -161,7 +162,7 @@ export default function ServeView(props: Props) {
               onClick={() => run(() => markReadyAction(readyMinutes))}
               className="btn-accent w-full py-3 mt-3 font-bold"
             >
-              نبّه العميل التالي ({readyMinutes} دقيقة)
+              {t.notifyNext.replace("{n}", String(readyMinutes))}
             </button>
           </div>
         )}
@@ -170,20 +171,20 @@ export default function ServeView(props: Props) {
       {/* العملاء المتخطّون — مع إمكانية الإعادة */}
       {props.skipped && props.skipped.length > 0 && (
         <div className="surface p-4">
-          <p className="font-bold text-sm mb-2">عملاء تم تخطّيهم اليوم</p>
+          <p className="font-bold text-sm mb-2">{t.skippedToday}</p>
           <div className="flex flex-col gap-2">
-            {props.skipped.map((t) => (
-              <div key={t.id} className="flex items-center justify-between" style={{ background: "var(--surface-2)", borderRadius: 8, padding: "8px 12px" }}>
+            {props.skipped.map((sk) => (
+              <div key={sk.id} className="flex items-center justify-between" style={{ background: "var(--surface-2)", borderRadius: 8, padding: "8px 12px" }}>
                 <span className="text-sm">
-                  <span className="font-bold">#{t.ticketNumber}</span> {t.customerName}
+                  <span className="font-bold">#{sk.ticketNumber}</span> {sk.customerName}
                 </span>
                 <button
                   disabled={pending}
-                  onClick={() => run(() => restoreAction(t.id))}
+                  onClick={() => run(() => restoreAction(sk.id))}
                   className="px-3 py-1 rounded font-bold text-sm"
                   style={{ background: "var(--accent)", color: "var(--accent-contrast)" }}
                 >
-                  إعادة للطابور
+                  {t.restore}
                 </button>
               </div>
             ))}
@@ -193,7 +194,7 @@ export default function ServeView(props: Props) {
 
       {!props.embedded && (
         <a href="/api/logout" className="muted text-center text-xs underline mt-2">
-          تسجيل الخروج
+          {t.logout}
         </a>
       )}
     </div>

@@ -10,6 +10,8 @@ import {
   markNextCustomerReady,
   restoreTicket,
 } from "@/lib/queue";
+import { getServerLocale } from "@/lib/locale-server";
+import { SERVE, localizeServeReason } from "@/i18n/serve";
 
 async function barberId(): Promise<bigint | null> {
   const s = await getSession();
@@ -17,11 +19,12 @@ async function barberId(): Promise<bigint | null> {
 }
 
 export async function callNextAction(): Promise<{ error?: string }> {
+  const locale = await getServerLocale();
   const id = await barberId();
-  if (!id) return { error: "انتهت الجلسة" };
+  if (!id) return { error: SERVE[locale].errSession };
   const r = await callNextCustomer(id);
   revalidatePath("/serve");
-  return r.ok ? {} : { error: r.reason };
+  return r.ok ? {} : { error: localizeServeReason(r.reason, locale) };
 }
 
 export async function completeAction(): Promise<void> {

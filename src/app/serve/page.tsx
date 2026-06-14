@@ -5,6 +5,10 @@ import { themeFor } from "@/lib/theme";
 import { serviceDateFor } from "@/lib/queue";
 import ServeView from "./ServeView";
 import AnnouncementBanner from "@/components/AnnouncementBanner";
+import { getServerLocale } from "@/lib/locale-server";
+import { dirFor, fontVarFor } from "@/lib/i18n";
+import { SERVE } from "@/i18n/serve";
+import LangSwitcher from "@/components/LangSwitcher";
 
 export const metadata = { title: "شاشة الموظف | دورك" };
 
@@ -39,11 +43,23 @@ export default async function ServePage() {
   const isManual = shop.settings?.countdownMode === "manual";
   const noTimes = shop.settings?.countdownMode === "none";
 
+  const locale = await getServerLocale();
+  const t = SERVE[locale];
+
   return (
-    <main className={`${theme.className} min-h-screen flex flex-col items-center px-5 py-6`}>
+    <main
+      className={`${theme.className} min-h-screen flex flex-col items-center px-5 py-6`}
+      dir={dirFor(locale)}
+      lang={locale}
+      style={{ fontFamily: fontVarFor(locale) }}
+    >
+      <div className="w-full max-w-md flex justify-center mb-3">
+        <LangSwitcher current={locale} />
+      </div>
       <AnnouncementBanner page="serve" shopId={shopId} className="w-full max-w-md mb-4" />
       <ServeView
         theme={theme.className}
+        t={t}
         shopName={shop.name}
         barberName={barber.name}
         role={session.role}
@@ -51,10 +67,10 @@ export default async function ServePage() {
         isManual={isManual}
         noTimes={noTimes}
         waitingCount={waitingAssigned + waitingPool}
-        skipped={skipped.map((t) => ({
-          id: t.id.toString(),
-          ticketNumber: t.ticketNumber,
-          customerName: t.customerName,
+        skipped={skipped.map((s) => ({
+          id: s.id.toString(),
+          ticketNumber: s.ticketNumber,
+          customerName: s.customerName,
         }))}
         current={
           current
