@@ -18,6 +18,7 @@ export default function GuideContent() {
     setLocale(l);
     try {
       localStorage.setItem(STORAGE_KEY, l);
+      document.cookie = `${STORAGE_KEY}=${l}; path=/; max-age=${60 * 60 * 24 * 365}; samesite=lax`;
     } catch {
       /* تجاهل */
     }
