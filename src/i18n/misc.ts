@@ -37,6 +37,7 @@ export interface DisplayMsgs {
   soundOn: string;
   soundOff: string;
   reconnecting: string;
+  getReady: string;
   nowServing: string;
   waitingNext: string;
   closed: string;
@@ -75,10 +76,10 @@ export const STATS: Record<Locale, StatsMsgs> = {
 };
 
 export const DISPLAY: Record<Locale, DisplayMsgs> = {
-  ar: { soundTitle: "نغمة عند نداء رقم جديد", soundOn: "🔔 الصوت مُفعّل", soundOff: "🔕 فعّل الصوت", reconnecting: "إعادة الاتصال…", nowServing: "الآن يُخدَم", waitingNext: "بانتظار نداء الدور التالي", closed: "الاستقبال متوقف حالياً", numberWord: "رقم", coming: "القادمون", autoUpdate: "تتحدّث الشاشة تلقائياً — مدعوم بنظام «دورك»" },
-  en: { soundTitle: "Tone when a new number is called", soundOn: "🔔 Sound on", soundOff: "🔕 Enable sound", reconnecting: "Reconnecting…", nowServing: "Now serving", waitingNext: "Waiting to call the next turn", closed: "Reception is closed", numberWord: "Number", coming: "Coming up", autoUpdate: "The screen updates automatically — Powered by Dawrak" },
-  hi: { soundTitle: "नया नंबर बुलाने पर टोन", soundOn: "🔔 ध्वनि चालू", soundOff: "🔕 ध्वनि चालू करें", reconnecting: "पुनः कनेक्ट हो रहा…", nowServing: "अभी सेवा में", waitingNext: "अगली बारी बुलाने की प्रतीक्षा", closed: "रिसेप्शन बंद है", numberWord: "नंबर", coming: "आने वाले", autoUpdate: "स्क्रीन स्वतः अपडेट होती है — दौरक द्वारा संचालित" },
-  bn: { soundTitle: "নতুন নম্বর ডাকলে টোন", soundOn: "🔔 শব্দ চালু", soundOff: "🔕 শব্দ চালু করুন", reconnecting: "পুনঃসংযোগ হচ্ছে…", nowServing: "এখন সেবা চলছে", waitingNext: "পরের পালা ডাকার অপেক্ষায়", closed: "অভ্যর্থনা বন্ধ", numberWord: "নম্বর", coming: "আসন্ন", autoUpdate: "স্ক্রিন স্বয়ংক্রিয়ভাবে আপডেট হয় — দাওরাক দ্বারা পরিচালিত" },
+  ar: { soundTitle: "نغمة عند نداء رقم جديد", soundOn: "🔔 الصوت مُفعّل", soundOff: "🔕 فعّل الصوت", reconnecting: "إعادة الاتصال…", getReady: "استعدوا — حان دوركم", nowServing: "الآن يُخدَم", waitingNext: "بانتظار نداء الدور التالي", closed: "الاستقبال متوقف حالياً", numberWord: "رقم", coming: "القادمون", autoUpdate: "تتحدّث الشاشة تلقائياً — مدعوم بنظام «دورك»" },
+  en: { soundTitle: "Tone when a new number is called", soundOn: "🔔 Sound on", soundOff: "🔕 Enable sound", reconnecting: "Reconnecting…", getReady: "Get ready — you're up", nowServing: "Now serving", waitingNext: "Waiting to call the next turn", closed: "Reception is closed", numberWord: "Number", coming: "Coming up", autoUpdate: "The screen updates automatically — Powered by Dawrak" },
+  hi: { soundTitle: "नया नंबर बुलाने पर टोन", soundOn: "🔔 ध्वनि चालू", soundOff: "🔕 ध्वनि चालू करें", reconnecting: "पुनः कनेक्ट हो रहा…", getReady: "तैयार हो जाइए — आपकी बारी", nowServing: "अभी सेवा में", waitingNext: "अगली बारी बुलाने की प्रतीक्षा", closed: "रिसेप्शन बंद है", numberWord: "नंबर", coming: "आने वाले", autoUpdate: "स्क्रीन स्वतः अपडेट होती है — दौरक द्वारा संचालित" },
+  bn: { soundTitle: "নতুন নম্বর ডাকলে টোন", soundOn: "🔔 শব্দ চালু", soundOff: "🔕 শব্দ চালু করুন", reconnecting: "পুনঃসংযোগ হচ্ছে…", getReady: "প্রস্তুত হোন — আপনার পালা", nowServing: "এখন সেবা চলছে", waitingNext: "পরের পালা ডাকার অপেক্ষায়", closed: "অভ্যর্থনা বন্ধ", numberWord: "নম্বর", coming: "আসন্ন", autoUpdate: "স্ক্রিন স্বয়ংক্রিয়ভাবে আপডেট হয় — দাওরাক দ্বারা পরিচালিত" },
 };
 
 export const CHANNELS: Record<Locale, ChannelsMsgs> = {

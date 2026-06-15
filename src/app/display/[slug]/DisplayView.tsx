@@ -13,6 +13,7 @@ interface State {
   theme: string;
   isOpen: boolean;
   serving: { number: number; barber: string | null }[];
+  imminent: number[];
   waiting: number[];
   syncedAt: number;
 }
@@ -37,6 +38,7 @@ export default function DisplayView({
   const inFlight = useRef(false);
   const ctxRef = useRef<AudioContext | null>(null);
   const prevServing = useRef<Set<number>>(new Set(initial.serving.map((s) => s.number)));
+  const prevImminent = useRef<Set<number>>(new Set(initial.imminent));
 
   const ensureCtx = useCallback(() => {
     type AC = typeof AudioContext;
@@ -56,15 +58,21 @@ export default function DisplayView({
       const res = await fetch(`/api/display/${slug}`, { cache: "no-store" });
       if (res.ok) {
         const data: State = await res.json();
-        // كشف أرقام خدمة جديدة → وميض + نغمة
-        const now = new Set(data.serving.map((s) => s.number));
-        const fresh = [...now].filter((n) => !prevServing.current.has(n));
-        if (fresh.length > 0) {
-          setFlash(new Set(fresh));
-          if (soundOn && ctxRef.current) playTurnChime(ctxRef.current);
+        // أرقام خدمة جديدة → وميض بطاقة + نغمة
+        const nowServingSet = new Set(data.serving.map((s) => s.number));
+        const freshServing = [...nowServingSet].filter((n) => !prevServing.current.has(n));
+        // أرقام حان دورها جديدة (انتقلت للقسم الوامض) → نغمة تنبيه «استعد»
+        const nowImminentSet = new Set(data.imminent);
+        const freshImminent = data.imminent.filter((n) => !prevImminent.current.has(n));
+        if (freshServing.length > 0) {
+          setFlash(new Set(freshServing));
           setTimeout(() => setFlash(new Set()), 4000);
         }
-        prevServing.current = now;
+        if ((freshServing.length > 0 || freshImminent.length > 0) && soundOn && ctxRef.current) {
+          playTurnChime(ctxRef.current);
+        }
+        prevServing.current = nowServingSet;
+        prevImminent.current = nowImminentSet;
         setState(data);
         setOnline(true);
       }
@@ -126,13 +134,36 @@ export default function DisplayView({
         </div>
       )}
 
-      {/* الآن يُخدَم */}
+      {/* القسم العلوي الوامض: حان دورهم — استعدوا */}
+      {s.imminent.length > 0 && (
+        <section className="mb-6">
+          <p className="text-2xl md:text-4xl font-extrabold mb-4" style={{ color: "var(--accent)" }}>
+            🔔 {t.getReady}
+          </p>
+          <div className="grid gap-5" style={{ gridTemplateColumns: `repeat(auto-fit, minmax(min(100%, 260px), 1fr))` }}>
+            {s.imminent.map((n) => (
+              <div
+                key={n}
+                className="display-flash rounded-3xl flex flex-col items-center justify-center py-8"
+                style={{ background: "var(--accent)", color: "var(--accent-contrast)" }}
+              >
+                <p className="text-xl md:text-3xl font-bold mb-1">{t.numberWord}</p>
+                <p className="font-extrabold leading-none" style={{ fontSize: "clamp(4.5rem, 16vw, 12rem)", color: "var(--accent-contrast)" }}>
+                  {n}
+                </p>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* القسم السفلي: الآن يُخدَم */}
       <section className="flex-1 flex flex-col">
         <p className="text-xl md:text-3xl font-bold mb-4" style={{ color: "var(--accent)" }}>
           {t.nowServing}
         </p>
         {s.serving.length === 0 ? (
-          <div className="surface flex-1 flex items-center justify-center min-h-[30vh]">
+          <div className="surface flex-1 flex items-center justify-center min-h-[24vh]">
             <p className="muted text-2xl md:text-4xl font-bold">
               {s.isOpen ? t.waitingNext : t.closed}
             </p>
@@ -163,7 +194,7 @@ export default function DisplayView({
         )}
       </section>
 
-      {/* القادمون */}
+      {/* القادمون (بقية الطابور) */}
       {s.waiting.length > 0 && (
         <section className="mt-6">
           <p className="text-lg md:text-2xl font-bold mb-3 muted">{t.coming}</p>

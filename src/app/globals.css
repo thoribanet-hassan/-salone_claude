@@ -168,6 +168,29 @@ body {
   }
 }
 
+/* شاشة العرض: بطاقة «حان دورك» الوامضة (القسم العلوي) — لافتة للنظر من بعيد */
+.display-flash {
+  animation: display-flash 1.1s ease-in-out infinite;
+}
+@keyframes display-flash {
+  0%,
+  100% {
+    background: var(--accent);
+    box-shadow: 0 0 0 2px var(--accent), 0 0 26px -2px var(--accent);
+    transform: scale(1);
+  }
+  50% {
+    background: color-mix(in srgb, var(--accent) 78%, transparent);
+    box-shadow: 0 0 0 4px var(--accent), 0 0 56px 0 var(--accent);
+    transform: scale(1.03);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .display-flash {
+    animation: none;
+  }
+}
+
 /* ====== صفحة الهبوط ====== */
 .landing-hero-bg {
   background:
