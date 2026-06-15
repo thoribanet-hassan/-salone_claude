@@ -33,6 +33,8 @@ export interface DashMsgs {
   graceWindow: string;
   graceNone: string;
   graceNMin: string;
+  displayLead: string;
+  displayLeadOpt: string; // {n}
   showCountdown: string;
   showExpectedTime: string;
   servicesDisplayHdr: string;
@@ -138,6 +140,8 @@ export const DASH: Record<Locale, DashMsgs> = {
     graceWindow: "نافذة حماية الموعد",
     graceNone: "بدون",
     graceNMin: "{n} دقيقة قبله",
+    displayLead: "تنبيه «استعدوا» في شاشة العرض قبل الدور بـ",
+    displayLeadOpt: "{n} دقيقة",
     showCountdown: "عرض العدّاد الحي للزبون",
     showExpectedTime: "عرض الوقت المتوقع",
     servicesDisplayHdr: "الخدمات والعرض",
@@ -236,6 +240,8 @@ export const DASH: Record<Locale, DashMsgs> = {
     graceWindow: "Appointment grace window",
     graceNone: "None",
     graceNMin: "{n} min before",
+    displayLead: "'Get ready' alert on the display, before the turn by",
+    displayLeadOpt: "{n} min",
     showCountdown: "Show the live countdown to the customer",
     showExpectedTime: "Show the expected time",
     servicesDisplayHdr: "Services & display",
@@ -334,6 +340,8 @@ export const DASH: Record<Locale, DashMsgs> = {
     graceWindow: "अपॉइंटमेंट सुरक्षा विंडो",
     graceNone: "कोई नहीं",
     graceNMin: "{n} मिनट पहले",
+    displayLead: "प्रदर्शन स्क्रीन पर 'तैयार हो जाइए' बारी से पहले",
+    displayLeadOpt: "{n} मिनट",
     showCountdown: "ग्राहक के लिए लाइव काउंटडाउन दिखाएँ",
     showExpectedTime: "अनुमानित समय दिखाएँ",
     servicesDisplayHdr: "सेवाएँ और प्रदर्शन",
@@ -432,6 +440,8 @@ export const DASH: Record<Locale, DashMsgs> = {
     graceWindow: "অ্যাপয়েন্টমেন্ট সুরক্ষা উইন্ডো",
     graceNone: "কোনোটি নয়",
     graceNMin: "{n} মিনিট আগে",
+    displayLead: "প্রদর্শন স্ক্রিনে 'প্রস্তুত হোন' পালার আগে",
+    displayLeadOpt: "{n} মিনিট",
     showCountdown: "গ্রাহকের জন্য লাইভ কাউন্টডাউন দেখান",
     showExpectedTime: "আনুমানিক সময় দেখান",
     servicesDisplayHdr: "সেবা ও প্রদর্শন",

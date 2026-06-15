@@ -395,6 +395,14 @@ export default async function DashboardPage({
             )}
             <Toggle name="showCountdown" label={t.showCountdown} checked={!!st?.showCountdown} />
             <Toggle name="showExpectedTime" label={t.showExpectedTime} checked={!!st?.showExpectedTime} />
+            <label className="flex items-center justify-between py-2 gap-2">
+              <span>{t.displayLead}</span>
+              <select name="displayLeadMinutes" defaultValue={String(st?.displayLeadMinutes ?? 3)} className="input-field px-3 py-2">
+                {[1, 2, 3, 5, 10].map((n) => (
+                  <option key={n} value={n}>{t.displayLeadOpt.replace("{n}", String(n))}</option>
+                ))}
+              </select>
+            </label>
 
             <p className="font-bold text-sm mt-3 mb-1" style={{ color: "var(--accent)" }}>{t.servicesDisplayHdr}</p>
             <Toggle name="allowServiceChoice" label={t.allowServiceChoice} checked={!!st?.allowServiceChoice} />

@@ -316,6 +316,7 @@ export async function updateSettingsAction(formData: FormData) {
       closeTime: time("closeTime", "22:00"),
       slotMinutes: clampInt("slotMinutes", 30, 5, 240),
       appointmentGraceMinutes: clampInt("appointmentGraceMinutes", 15, 0, 120),
+      displayLeadMinutes: clampInt("displayLeadMinutes", 3, 1, 30),
     },
   });
   revalidatePath("/dashboard");

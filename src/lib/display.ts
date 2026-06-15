@@ -16,7 +16,7 @@ export interface DisplayState {
 
 const WAITING_SHOWN = 8; // كم رقماً قادماً نعرض (بعد الوامضين)
 const IMMINENT_SHOWN = 6; // أقصى عدد أرقام في القسم الوامض (تفادي الازدحام)
-const IMMINENT_MINUTES = 3; // يومض حين يتبقّى ≤ هذا على الدور (وضع الوقت التلقائي)
+const DEFAULT_LEAD_MINUTES = 3; // الافتراضي إن لم تُضبط العتبة على المنشأة
 
 // حالة شاشة العرض داخل المنشأة (تلفزيون): مَن يُخدَم الآن + مَن حان دوره + القادمون
 export async function displayStateFor(slug: string): Promise<DisplayState | null> {
@@ -49,7 +49,8 @@ export async function displayStateFor(slug: string): Promise<DisplayState | null
 
   const mode = shop.settings?.countdownMode ?? "auto";
   const now = Date.now();
-  const thresholdMs = IMMINENT_MINUTES * 60_000;
+  const leadMinutes = shop.settings?.displayLeadMinutes ?? DEFAULT_LEAD_MINUTES;
+  const thresholdMs = leadMinutes * 60_000;
   const imminentNums = new Set<number>();
 
   // تجاوز يدوي في كل الأوضاع: زبون حدّد له الموظف جاهزيته وحان وقتها (أو فات)
