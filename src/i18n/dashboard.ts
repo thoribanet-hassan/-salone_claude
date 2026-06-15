@@ -91,6 +91,17 @@ export interface DashMsgs {
   removeMedia: string;
   saveEdits: string;
   addAd: string;
+  // كلمة المرور
+  pwTitle: string;
+  pwLead: string;
+  pwCurrent: string;
+  pwNew: string;
+  pwConfirm: string;
+  pwSave: string;
+  pwOk: string;
+  pwBad: string;
+  pwWeak: string;
+  pwMismatch: string;
   poweredBy: string;
   placements: Record<Exclude<AnnouncementPlacement, "home">, string>;
 }
@@ -181,6 +192,16 @@ export const DASH: Record<Locale, DashMsgs> = {
     removeMedia: "إزالة الوسائط",
     saveEdits: "حفظ التعديلات",
     addAd: "إضافة الإعلان",
+    pwTitle: "كلمة المرور 🔑",
+    pwLead: "غيّر كلمة مرور دخولك للوحة. إن نسيتها كلياً، تواصل مع فريق دورك لإعادة تعيينها.",
+    pwCurrent: "كلمة المرور الحالية",
+    pwNew: "كلمة المرور الجديدة (٦ أحرف على الأقل)",
+    pwConfirm: "تأكيد كلمة المرور الجديدة",
+    pwSave: "تغيير كلمة المرور",
+    pwOk: "تم تغيير كلمة المرور بنجاح ✅",
+    pwBad: "كلمة المرور الحالية غير صحيحة",
+    pwWeak: "كلمة المرور الجديدة قصيرة جداً (٦ أحرف على الأقل)",
+    pwMismatch: "كلمتا المرور الجديدتان غير متطابقتين",
     poweredBy: "مدعوم بنظام «دورك»",
     placements: { all: "كل صفحاتي", join: "صفحة الحجز", ticket: "تذكرة الانتظار", dashboard: "لوحتي", serve: "شاشة الموظف" },
   },
@@ -269,6 +290,16 @@ export const DASH: Record<Locale, DashMsgs> = {
     removeMedia: "Remove media",
     saveEdits: "Save changes",
     addAd: "Add announcement",
+    pwTitle: "Password 🔑",
+    pwLead: "Change the password you sign in with. If you forget it entirely, contact the Dawrak team to reset it.",
+    pwCurrent: "Current password",
+    pwNew: "New password (at least 6 characters)",
+    pwConfirm: "Confirm new password",
+    pwSave: "Change password",
+    pwOk: "Password changed successfully ✅",
+    pwBad: "Current password is incorrect",
+    pwWeak: "New password is too short (at least 6 characters)",
+    pwMismatch: "The two new passwords don't match",
     poweredBy: "Powered by Dawrak",
     placements: { all: "All my pages", join: "Booking page", ticket: "Waiting ticket", dashboard: "My dashboard", serve: "Employee screen" },
   },
@@ -357,6 +388,16 @@ export const DASH: Record<Locale, DashMsgs> = {
     removeMedia: "मीडिया हटाएँ",
     saveEdits: "बदलाव सहेजें",
     addAd: "विज्ञापन जोड़ें",
+    pwTitle: "पासवर्ड 🔑",
+    pwLead: "जिस पासवर्ड से आप साइन इन करते हैं उसे बदलें। पूरी तरह भूल जाएँ तो रीसेट के लिए दौरक टीम से संपर्क करें।",
+    pwCurrent: "मौजूदा पासवर्ड",
+    pwNew: "नया पासवर्ड (कम से कम 6 अक्षर)",
+    pwConfirm: "नया पासवर्ड दोबारा लिखें",
+    pwSave: "पासवर्ड बदलें",
+    pwOk: "पासवर्ड सफलतापूर्वक बदला गया ✅",
+    pwBad: "मौजूदा पासवर्ड गलत है",
+    pwWeak: "नया पासवर्ड बहुत छोटा है (कम से कम 6 अक्षर)",
+    pwMismatch: "दोनों नए पासवर्ड मेल नहीं खाते",
     poweredBy: "दौरक द्वारा संचालित",
     placements: { all: "मेरे सभी पेज", join: "बुकिंग पेज", ticket: "प्रतीक्षा टिकट", dashboard: "मेरा डैशबोर्ड", serve: "कर्मचारी स्क्रीन" },
   },
@@ -445,6 +486,16 @@ export const DASH: Record<Locale, DashMsgs> = {
     removeMedia: "মিডিয়া সরান",
     saveEdits: "পরিবর্তন সংরক্ষণ",
     addAd: "বিজ্ঞাপন যোগ করুন",
+    pwTitle: "পাসওয়ার্ড 🔑",
+    pwLead: "যে পাসওয়ার্ড দিয়ে সাইন ইন করেন তা পরিবর্তন করুন। সম্পূর্ণ ভুলে গেলে রিসেটের জন্য দাওরাক টিমের সাথে যোগাযোগ করুন।",
+    pwCurrent: "বর্তমান পাসওয়ার্ড",
+    pwNew: "নতুন পাসওয়ার্ড (অন্তত ৬ অক্ষর)",
+    pwConfirm: "নতুন পাসওয়ার্ড নিশ্চিত করুন",
+    pwSave: "পাসওয়ার্ড পরিবর্তন",
+    pwOk: "পাসওয়ার্ড সফলভাবে পরিবর্তিত হয়েছে ✅",
+    pwBad: "বর্তমান পাসওয়ার্ড সঠিক নয়",
+    pwWeak: "নতুন পাসওয়ার্ড খুব ছোট (অন্তত ৬ অক্ষর)",
+    pwMismatch: "দুটি নতুন পাসওয়ার্ড মিলছে না",
     poweredBy: "দাওরাক দ্বারা পরিচালিত",
     placements: { all: "আমার সব পেজ", join: "বুকিং পেজ", ticket: "অপেক্ষা টিকিট", dashboard: "আমার ড্যাশবোর্ড", serve: "কর্মী স্ক্রিন" },
   },

@@ -20,6 +20,15 @@ export function verifyPassword(pw: string, stored: string | null): boolean {
   return expected.length === actual.length && timingSafeEqual(expected, actual);
 }
 
+// كلمة مرور مؤقتة سهلة القراءة (بلا أحرف ملتبسة 0/O/1/l/I) — للمؤسس عند إعادة التعيين
+export function generateTempPassword(len = 8): string {
+  const alphabet = "ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
+  const bytes = randomBytes(len);
+  let out = "";
+  for (let i = 0; i < len; i++) out += alphabet[bytes[i] % alphabet.length];
+  return out;
+}
+
 // ===== جلسة موقّعة (HMAC) في كوكي =====
 export interface SessionData {
   userId: string;

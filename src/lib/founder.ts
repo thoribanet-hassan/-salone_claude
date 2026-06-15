@@ -6,6 +6,9 @@ import { prisma } from "./db";
 
 const COOKIE = "founder_session";
 const SECRET = process.env.SESSION_SECRET || "dev-secret-change-me";
+
+// كوكي رسالة عابرة: يحمل كلمة مرور مؤقتة لعرضها مرة بعد إعادة التعيين (قصير العمر)
+export const FOUNDER_FLASH = "founder_flash";
 const SESSION_HOURS = 24 * 7;
 
 function sign(data: string): string {

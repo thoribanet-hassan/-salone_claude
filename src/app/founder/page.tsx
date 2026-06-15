@@ -1,4 +1,5 @@
-import { isFounder, founderMetrics } from "@/lib/founder";
+import { cookies } from "next/headers";
+import { isFounder, founderMetrics, FOUNDER_FLASH } from "@/lib/founder";
 import { shopAccess } from "@/lib/subscription";
 import { prisma } from "@/lib/db";
 import { PLACEMENT_LABELS } from "@/lib/announcements";
@@ -11,6 +12,7 @@ import {
   deleteAnnouncementAction,
   toggleSelfAnnounceAction,
   activateShopAction,
+  resetManagerPasswordAction,
 } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -229,6 +231,17 @@ export default async function FounderPage({
     mediaType: a.mediaType,
   }));
 
+  // رسالة عابرة: كلمة مرور مؤقتة بعد إعادة تعيينها (تُعرض مرة، وتنتهي تلقائياً بعد دقائق)
+  let pwReset: { shop: string; email: string; temp: string } | null = null;
+  const flashRaw = (await cookies()).get(FOUNDER_FLASH)?.value;
+  if (flashRaw) {
+    try {
+      pwReset = JSON.parse(flashRaw);
+    } catch {
+      pwReset = null;
+    }
+  }
+
   return (
     <main className="theme-general min-h-screen flex flex-col items-center px-5 py-8">
       <div className="w-full max-w-2xl flex flex-col gap-8">
@@ -404,21 +417,36 @@ export default async function FounderPage({
         <div id="subscriptions">
           <Section title="الاشتراكات">
             <p className="muted text-sm -mt-2">
-              حالة كل منشأة. «فعّل/مدّد» يضيف شهراً (التفعيل اليدوي بعد التحويل).
+              حالة كل منشأة. «فعّل/مدّد» يضيف شهراً (التفعيل اليدوي بعد التحويل). «إعادة تعيين كلمة المرور» لمالكٍ نسي كلمته.
             </p>
+            {pwReset && (
+              <div className="surface p-4 flex flex-col gap-1" style={{ borderColor: "var(--accent)", borderWidth: "1.5px" }}>
+                <p className="font-extrabold">🔑 كلمة مرور مؤقتة — {pwReset.shop}</p>
+                <p className="text-sm">
+                  الدخول: <span className="font-bold" dir="ltr">{pwReset.email || "—"}</span>
+                </p>
+                <p className="text-sm">
+                  كلمة المرور المؤقتة:{" "}
+                  <span className="font-extrabold text-lg" dir="ltr" style={{ color: "var(--accent)" }}>
+                    {pwReset.temp}
+                  </span>
+                </p>
+                <p className="muted text-xs mt-1">
+                  سلّمها للمالك عبر قناة الدعم، وانصحه بتغييرها من لوحته فور الدخول (بطاقة «كلمة المرور»). تختفي هذه الرسالة تلقائياً بعد دقائق.
+                </p>
+              </div>
+            )}
             <div className="surface p-2 flex flex-col">
               {shopRows.map((s, i) => {
                 const a = shopAccess(s);
                 const color = a.state === "active" ? "#16a34a" : a.state === "trial" ? "var(--accent)" : "#dc2626";
                 const label = a.state === "active" ? "مدفوع" : a.state === "trial" ? "تجربة" : "منتهٍ";
                 return (
-                  <form
+                  <div
                     key={s.id.toString()}
-                    action={activateShopAction}
                     className="flex items-center justify-between p-2 gap-2"
                     style={i > 0 ? { borderTop: "1px solid var(--border)" } : undefined}
                   >
-                    <input type="hidden" name="shopId" value={s.id.toString()} />
                     <span className="text-sm font-bold truncate flex-1">
                       {s.name}{" "}
                       <span className="font-normal" style={{ color }}>
@@ -429,10 +457,21 @@ export default async function FounderPage({
                         حتى {fmtD.format(a.until)}
                       </span>
                     </span>
-                    <button type="submit" className="btn-accent px-3 py-1 text-xs font-bold shrink-0">
-                      فعّل/مدّد
-                    </button>
-                  </form>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <form action={resetManagerPasswordAction}>
+                        <input type="hidden" name="shopId" value={s.id.toString()} />
+                        <button type="submit" className="surface px-3 py-1 text-xs font-bold">
+                          🔑 كلمة المرور
+                        </button>
+                      </form>
+                      <form action={activateShopAction}>
+                        <input type="hidden" name="shopId" value={s.id.toString()} />
+                        <button type="submit" className="btn-accent px-3 py-1 text-xs font-bold">
+                          فعّل/مدّد
+                        </button>
+                      </form>
+                    </div>
+                  </div>
                 );
               })}
             </div>

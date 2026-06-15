@@ -29,6 +29,7 @@ import {
   updateSettingsAction,
   saveShopAnnouncementAction,
   deleteShopAnnouncementAction,
+  changePasswordAction,
 } from "./actions";
 
 export const metadata = { title: "لوحة التحكم | دورك" };
@@ -99,7 +100,12 @@ function ShopAdForm({ a, t }: { a: ShopAd | null; t: DashMsgs }) {
   );
 }
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ pw?: string }>;
+}) {
+  const { pw: pwStatus } = await searchParams;
   const session = await getSession();
   if (!session || session.role !== "manager") redirect("/login");
   const shopId = BigInt(session.shopId);
@@ -571,6 +577,26 @@ export default async function DashboardPage() {
             </div>
           </section>
         )}
+
+        {/* كلمة المرور — تغييرها (يتطلب الحالية) */}
+        <section id="password" className="surface p-5">
+          <h2 className="font-extrabold mb-1">{t.pwTitle}</h2>
+          <p className="muted text-sm mb-3">{t.pwLead}</p>
+          {pwStatus === "ok" && (
+            <p className="text-sm font-bold mb-3" style={{ color: "#16a34a" }}>{t.pwOk}</p>
+          )}
+          {pwStatus && pwStatus !== "ok" && (
+            <p className="text-sm font-bold mb-3" style={{ color: "#dc2626" }}>
+              {pwStatus === "bad" ? t.pwBad : pwStatus === "weak" ? t.pwWeak : t.pwMismatch}
+            </p>
+          )}
+          <form action={changePasswordAction} className="flex flex-col gap-2">
+            <input name="current" type="password" required autoComplete="current-password" placeholder={t.pwCurrent} className="input-field px-3 py-2" />
+            <input name="next" type="password" required minLength={6} autoComplete="new-password" placeholder={t.pwNew} className="input-field px-3 py-2" />
+            <input name="confirm" type="password" required minLength={6} autoComplete="new-password" placeholder={t.pwConfirm} className="input-field px-3 py-2" />
+            <button className="btn-accent py-3 font-bold">{t.pwSave}</button>
+          </form>
+        </section>
 
         <p className="muted text-center text-xs">{t.poweredBy}</p>
       </div>

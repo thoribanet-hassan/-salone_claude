@@ -1,12 +1,15 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 import {
   verifyFounderPassword,
   setFounderSession,
   clearFounderSession,
   isFounder,
+  FOUNDER_FLASH,
 } from "@/lib/founder";
+import { hashPassword, generateTempPassword } from "@/lib/auth";
 import { storeMedia, removeMediaFile } from "@/lib/media";
 import { prisma } from "@/lib/db";
 import type { AnnouncementPlacement } from "@prisma/client";
@@ -118,6 +121,38 @@ export async function activateShopAction(formData: FormData): Promise<void> {
         shop.paidUntil && shop.paidUntil.getTime() > Date.now() ? shop.paidUntil : new Date();
       const paidUntil = new Date(base.getTime() + 30 * 24 * 60 * 60 * 1000);
       await prisma.shop.update({ where: { id: BigInt(idRaw) }, data: { paidUntil } });
+    }
+  }
+  redirect("/founder#subscriptions");
+}
+
+// إعادة تعيين كلمة مرور مدير منشأة — المؤسس حصراً (لحالة نسيان المالك كلمته)
+// يولّد كلمة مؤقتة، يحدّث الـ hash، ويعرضها للمؤسس مرة واحدة عبر كوكي flash قصير العمر
+export async function resetManagerPasswordAction(formData: FormData): Promise<void> {
+  if (!(await isFounder())) redirect("/founder");
+  const idRaw = String(formData.get("shopId") ?? "");
+  if (/^\d+$/.test(idRaw)) {
+    const manager = await prisma.user.findFirst({
+      where: { shopId: BigInt(idRaw), role: "manager" },
+      include: { shop: { select: { name: true } } },
+    });
+    if (manager) {
+      const temp = generateTempPassword();
+      await prisma.user.update({
+        where: { id: manager.id },
+        data: { passwordHash: hashPassword(temp) },
+      });
+      const payload = JSON.stringify({
+        shop: manager.shop?.name ?? "",
+        email: manager.email ?? "",
+        temp,
+      });
+      (await cookies()).set(FOUNDER_FLASH, payload, {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/founder",
+        maxAge: 300, // يختفي تلقائياً بعد ٥ دقائق
+      });
     }
   }
   redirect("/founder#subscriptions");

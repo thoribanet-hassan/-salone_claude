@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
-import { getSession } from "@/lib/auth";
+import { getSession, verifyPassword, hashPassword } from "@/lib/auth";
 import { generateLoginCode } from "@/lib/shop";
 import { setBarberStatus } from "@/lib/queue";
 import { storeMedia, removeMediaFile } from "@/lib/media";
@@ -13,6 +13,22 @@ async function requireManager() {
   const s = await getSession();
   if (!s || s.role !== "manager") redirect("/login");
   return { userId: BigInt(s.userId), shopId: BigInt(s.shopId) };
+}
+
+// ===== كلمة مرور المدير: تغييرها من اللوحة (يتطلب كلمة المرور الحالية) =====
+export async function changePasswordAction(formData: FormData): Promise<void> {
+  const { userId } = await requireManager();
+  const current = String(formData.get("current") ?? "");
+  const next = String(formData.get("next") ?? "");
+  const confirm = String(formData.get("confirm") ?? "");
+
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user || !verifyPassword(current, user.passwordHash)) redirect("/dashboard?pw=bad#password");
+  if (next.length < 6) redirect("/dashboard?pw=weak#password");
+  if (next !== confirm) redirect("/dashboard?pw=mismatch#password");
+
+  await prisma.user.update({ where: { id: userId }, data: { passwordHash: hashPassword(next) } });
+  redirect("/dashboard?pw=ok#password");
 }
 
 // مواضع إعلان المنشأة (دون «home» — الرئيسية ليست تابعة لمنشأة)
