@@ -81,7 +81,7 @@
 - `/dashboard` — المدير (إعدادات، موظفون، خدمات، مصفوفة مدد، QR، إحصاءات مضمّنة، إعلانات المحل، بطاقة دليل الاستخدام، بطاقة دعم واتساب).
 - `/serve` — شاشة الموظف (نادِ التالي / إكمال / تخطّي / تبديل التوفر).
 - `/dashboard/stats` — إحصاءات لكل موظف (عدد مكتمل + إيراد) يومي/شهري.
-- `/display/[slug]` — شاشة عرض داخلية (TV): قسم علوي وامض «استعدوا — حان دوركم» (الأوشك أن يُنادَوا، محفّز ذكي حسب الوضع، عتبة ٣ د) + «الآن يُخدَم» + القادمون.
+- `/display/[slug]` — شاشة عرض داخلية (TV): قسم علوي وامض «استعدوا — حان دوركم» (الأوشك أن يُنادَوا، محفّز ذكي حسب الوضع، عتبة قابلة للضبط لكل منشأة `displayLeadMinutes` افتراضي ٣ د) + «الآن يُخدَم» + القادمون.
 - `/founder` — لوحة المؤسس (محميّة بكلمة مرور من البيئة): مقاييس المنتج، الإعلانات، صلاحيات البث الذاتي، الاشتراكات.
 
 ### القياس والتحليلات
@@ -136,10 +136,10 @@
 
 ---
 
-## 7. الهجرات (Prisma Migrations) — 22 هجرة
+## 7. الهجرات (Prisma Migrations) — 23 هجرة
 
-من `init` (2026-06-04) حتى `subscription_trial_lock` (2026-06-15). أبرزها:
-services_and_durations، appointments، appointment_slots_and_hours، events_and_ticket_source، announcements (+targeting +media +shop_owned)، service_rating، push_subscriptions، subscription_trial_lock.
+من `init` (2026-06-04) حتى `display_lead_minutes` (2026-06-15). أبرزها:
+services_and_durations، appointments، appointment_slots_and_hours، events_and_ticket_source، announcements (+targeting +media +shop_owned)، service_rating، push_subscriptions، subscription_trial_lock، display_lead_minutes.
 
 ---
 
