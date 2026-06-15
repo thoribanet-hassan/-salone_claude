@@ -135,6 +135,9 @@ model Shop {
   plan         Plan         @default(basic)
   timezone     String       @default("Asia/Riyadh")
   canSelfAnnounce Boolean    @default(false) @map("can_self_announce") // يمنحها المؤسس: بث إعلانات خاصة بالمنشأة
+  // الاشتراك: تجربة مجانية ثم قفل حتى التفعيل. الوصول مسموح إن trialEndsAt>now أو paidUntil>now
+  trialEndsAt  DateTime     @default(now()) @map("trial_ends_at") // يُضبط عند التسجيل = الآن + ٣٠ يوماً
+  paidUntil    DateTime?    @map("paid_until") // null حتى أول تفعيل مدفوع، ثم تاريخ انتهاء الاشتراك
   createdAt    DateTime     @default(now()) @map("created_at")
   updatedAt    DateTime     @updatedAt @map("updated_at")
 

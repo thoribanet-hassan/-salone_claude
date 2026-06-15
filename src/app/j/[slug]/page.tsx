@@ -7,6 +7,8 @@ import { availableSlotsFor } from "@/lib/slots";
 import { getServerLocale } from "@/lib/locale-server";
 import { dirFor, fontVarFor } from "@/lib/i18n";
 import { BOOKING } from "@/i18n/booking";
+import { SUB } from "@/i18n/subscription";
+import { shopAccess } from "@/lib/subscription";
 import LangSwitcher from "@/components/LangSwitcher";
 import AnnouncementBanner from "@/components/AnnouncementBanner";
 import BookingForm from "./BookingForm";
@@ -73,6 +75,8 @@ export default async function JoinPage({
 
   const locale = await getServerLocale();
   const t = BOOKING[locale];
+  const sub = SUB[locale];
+  const locked = shopAccess(shop).locked; // تجربة/اشتراك منتهٍ → الحجز موقوف
 
   // خانات المواعيد المتاحة لليوم (تُولَّد فقط إن فُعّلت المواعيد)
   const slots = shop.settings?.allowScheduling
@@ -107,7 +111,12 @@ export default async function JoinPage({
         )}
 
         <div className="surface p-6">
-          {canBook ? (
+          {locked ? (
+            <div className="text-center py-6">
+              <p className="text-lg font-bold mb-2">{sub.lockedTitle}</p>
+              <p className="muted">{sub.lockedBody}</p>
+            </div>
+          ) : canBook ? (
             <>
               <h2 className="text-xl font-bold mb-1">{t.bookTitle}</h2>
               <p className="muted text-sm mb-5">{t.bookLead}</p>

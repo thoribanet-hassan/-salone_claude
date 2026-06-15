@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "shops" ADD COLUMN     "paid_until" TIMESTAMP(3),
+ADD COLUMN     "trial_ends_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP;

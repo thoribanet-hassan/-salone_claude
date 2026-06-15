@@ -7,6 +7,8 @@ import { createTicket, scheduledAtFromLocal } from "@/lib/queue";
 import { logEvent, visitorIdFrom, sourceFrom } from "@/lib/events";
 import { getServerLocale } from "@/lib/locale-server";
 import { BOOKING } from "@/i18n/booking";
+import { SUB } from "@/i18n/subscription";
+import { shopAccess } from "@/lib/subscription";
 
 export interface BookingState {
   error?: string;
@@ -26,7 +28,8 @@ export async function createBookingAction(
   // قد تُختار خدمة واحدة أو أكثر
   const serviceRawList = formData.getAll("serviceIds").map((v) => String(v)).filter(Boolean);
 
-  const e = BOOKING[await getServerLocale()]; // رسائل الأخطاء بلغة الزائر
+  const locale = await getServerLocale();
+  const e = BOOKING[locale]; // رسائل الأخطاء بلغة الزائر
 
   if (!customerName) return { error: e.errName };
   if (serviceRawList.length === 0) return { error: e.errService };
@@ -36,6 +39,7 @@ export async function createBookingAction(
     include: { settings: true },
   });
   if (!shop) return { error: e.errShop };
+  if (shopAccess(shop).locked) return { error: SUB[locale].lockedBody }; // اشتراك منتهٍ
 
   const isScheduled = whenMode === "scheduled";
 

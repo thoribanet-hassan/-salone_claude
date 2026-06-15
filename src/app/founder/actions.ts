@@ -103,6 +103,26 @@ export async function deleteAnnouncementAction(formData: FormData): Promise<void
   redirect("/founder#announcements");
 }
 
+// تفعيل/تمديد اشتراك منشأة شهراً — المؤسس حصراً (التفعيل اليدوي بعد التحويل)
+export async function activateShopAction(formData: FormData): Promise<void> {
+  if (!(await isFounder())) redirect("/founder");
+  const idRaw = String(formData.get("shopId") ?? "");
+  if (/^\d+$/.test(idRaw)) {
+    const shop = await prisma.shop.findUnique({
+      where: { id: BigInt(idRaw) },
+      select: { paidUntil: true },
+    });
+    if (shop) {
+      // يمدّد من تاريخ الانتهاء الحالي إن كان مستقبلاً، وإلا من الآن
+      const base =
+        shop.paidUntil && shop.paidUntil.getTime() > Date.now() ? shop.paidUntil : new Date();
+      const paidUntil = new Date(base.getTime() + 30 * 24 * 60 * 60 * 1000);
+      await prisma.shop.update({ where: { id: BigInt(idRaw) }, data: { paidUntil } });
+    }
+  }
+  redirect("/founder#subscriptions");
+}
+
 // منح/سحب صلاحية الإعلان الذاتي لمنشأة — المؤسس حصراً
 export async function toggleSelfAnnounceAction(formData: FormData): Promise<void> {
   if (!(await isFounder())) redirect("/founder");

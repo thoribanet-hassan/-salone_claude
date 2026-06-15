@@ -6,6 +6,7 @@ import { hashPassword, setSession } from "@/lib/auth";
 import { arabicToSlug, uniqueSlug, generateShopCode } from "@/lib/shop";
 import { getServerLocale } from "@/lib/locale-server";
 import { AUTH } from "@/i18n/auth";
+import { trialEnd } from "@/lib/subscription";
 import type { FacilityType } from "@prisma/client";
 
 export interface RegisterState {
@@ -67,6 +68,7 @@ export async function registerAction(
       slug,
       shopCode,
       timezone,
+      trialEndsAt: trialEnd(), // تجربة مجانية ٣٠ يوماً متدحرجة من التسجيل
       settings: {
         create: {
           isOpen: true,

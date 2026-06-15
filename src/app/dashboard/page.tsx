@@ -12,6 +12,8 @@ import { dirFor, fontVarFor } from "@/lib/i18n";
 import { DASH, type DashMsgs } from "@/i18n/dashboard";
 import { SERVE } from "@/i18n/serve";
 import { CHANNELS } from "@/i18n/misc";
+import { SUB } from "@/i18n/subscription";
+import { shopAccess, supportWhatsApp, bankDetails } from "@/lib/subscription";
 import LangSwitcher from "@/components/LangSwitcher";
 import {
   addBarberAction,
@@ -170,6 +172,57 @@ export default async function DashboardPage() {
 
   const locale = await getServerLocale();
   const t = DASH[locale];
+  const sub = SUB[locale];
+  const access = shopAccess(shop);
+  const renewMsg = sub.whatsappMsgRenew
+    .replace("{owner}", shop.ownerName)
+    .replace("{shop}", shop.name)
+    .replace("{code}", shop.shopCode);
+  const supportMsg = sub.supportMsg
+    .replace("{owner}", shop.ownerName)
+    .replace("{shop}", shop.name)
+    .replace("{code}", shop.shopCode);
+  const renewWa = supportWhatsApp(renewMsg);
+  const supportWa = supportWhatsApp(supportMsg);
+  const bank = bankDetails();
+
+  // اشتراك منتهٍ → شاشة تجديد بدل اللوحة (الدخول يعمل، والعمليات مقفلة)
+  if (access.locked) {
+    return (
+      <main
+        className={`${theme.className} min-h-screen flex flex-col items-center justify-center px-5 py-8`}
+        dir={dirFor(locale)}
+        lang={locale}
+        style={{ fontFamily: fontVarFor(locale) }}
+      >
+        <div className="w-full max-w-md flex flex-col gap-5">
+          <div className="flex justify-center">
+            <LangSwitcher current={locale} />
+          </div>
+          <div className="surface p-7 text-center flex flex-col gap-3" style={{ borderColor: "var(--accent)", borderWidth: "1.5px" }}>
+            <span className="text-5xl">🔒</span>
+            <h1 className="text-2xl font-extrabold">{sub.gateTitle}</h1>
+            <p className="muted">{sub.gateBody}</p>
+            <p className="text-sm">{sub.howToRenew}</p>
+            {bank && (
+              <div className="surface p-3 text-start text-sm whitespace-pre-line" style={{ background: "var(--surface-2)" }}>
+                <span className="font-bold block mb-1">{sub.bankHdr}</span>
+                {bank}
+              </div>
+            )}
+            {renewWa ? (
+              <a href={renewWa} target="_blank" rel="noopener noreferrer" className="btn-accent py-3 no-underline font-bold">
+                {sub.contactWhatsapp}
+              </a>
+            ) : (
+              <p className="muted text-sm">{sub.noBank}</p>
+            )}
+          </div>
+          <a href="/api/logout" className="muted text-center text-sm no-underline">{sub.logout}</a>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main
@@ -182,6 +235,12 @@ export default async function DashboardPage() {
         <div className="flex justify-center">
           <LangSwitcher current={locale} />
         </div>
+
+        {access.expiringSoon && (
+          <a href={renewWa ?? "#"} target="_blank" rel="noopener noreferrer" className="no-underline surface p-3 text-center text-sm font-bold" style={{ borderColor: "var(--accent)", borderWidth: "1.5px" }}>
+            ⏳ {sub.bannerSoon.replace("{n}", String(access.daysLeft))} {renewWa && <span style={{ color: "var(--accent)" }}>{sub.renew} ←</span>}
+          </a>
+        )}
         <header className="text-center">
           <p className="muted text-sm">{shop.facilityLabel || theme.label}</p>
           <h1 className="text-2xl font-extrabold">{shop.name}</h1>
@@ -209,6 +268,25 @@ export default async function DashboardPage() {
           </span>
           <span className="btn-accent py-2 px-4 text-sm font-bold shrink-0">{t.guideBtn}</span>
         </a>
+
+        {/* تواصل مع فريق دورك — دعم وملاحظات عبر واتساب */}
+        {supportWa && (
+          <a
+            href={supportWa}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="no-underline surface p-4 flex items-center gap-3"
+          >
+            <span className="text-3xl shrink-0">💬</span>
+            <span className="flex-1">
+              <span className="block font-extrabold">{sub.supportTitle}</span>
+              <span className="block muted text-xs mt-0.5">{sub.supportBody}</span>
+            </span>
+            <span className="surface px-3 py-2 text-xs font-bold shrink-0" style={{ background: "#25D366", color: "#fff" }}>
+              {sub.supportBtn}
+            </span>
+          </a>
+        )}
 
         {/* خدمة العملاء (المدير حلاق أيضاً) */}
         {manager && (

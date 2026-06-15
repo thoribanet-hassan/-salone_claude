@@ -1,4 +1,5 @@
 import { isFounder, founderMetrics } from "@/lib/founder";
+import { shopAccess } from "@/lib/subscription";
 import { prisma } from "@/lib/db";
 import { PLACEMENT_LABELS } from "@/lib/announcements";
 import ShopPicker, { type ShopOption } from "@/components/ShopPicker";
@@ -9,6 +10,7 @@ import {
   saveAnnouncementAction,
   deleteAnnouncementAction,
   toggleSelfAnnounceAction,
+  activateShopAction,
 } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -198,10 +200,11 @@ export default async function FounderPage({
   const [announcementRows, shopRows] = await Promise.all([
     prisma.announcement.findMany({ orderBy: { updatedAt: "desc" } }),
     prisma.shop.findMany({
-      select: { id: true, name: true, facilityType: true, facilityLabel: true, canSelfAnnounce: true },
+      select: { id: true, name: true, facilityType: true, facilityLabel: true, canSelfAnnounce: true, trialEndsAt: true, paidUntil: true, createdAt: true },
       orderBy: { name: "asc" },
     }),
   ]);
+  const fmtD = new Intl.DateTimeFormat("ar", { timeZone: "Asia/Riyadh", month: "short", day: "numeric", year: "numeric" });
   const TYPE_AR: Record<string, string> = {
     male_barber: "حلاق رجالي",
     female_salon: "صالون نسائي",
@@ -395,6 +398,44 @@ export default async function FounderPage({
             {announcements.map((a) => (
               <AnnouncementForm key={a.id} a={a} shops={shopOptions} />
             ))}
+          </Section>
+        </div>
+
+        <div id="subscriptions">
+          <Section title="الاشتراكات">
+            <p className="muted text-sm -mt-2">
+              حالة كل منشأة. «فعّل/مدّد» يضيف شهراً (التفعيل اليدوي بعد التحويل).
+            </p>
+            <div className="surface p-2 flex flex-col">
+              {shopRows.map((s, i) => {
+                const a = shopAccess(s);
+                const color = a.state === "active" ? "#16a34a" : a.state === "trial" ? "var(--accent)" : "#dc2626";
+                const label = a.state === "active" ? "مدفوع" : a.state === "trial" ? "تجربة" : "منتهٍ";
+                return (
+                  <form
+                    key={s.id.toString()}
+                    action={activateShopAction}
+                    className="flex items-center justify-between p-2 gap-2"
+                    style={i > 0 ? { borderTop: "1px solid var(--border)" } : undefined}
+                  >
+                    <input type="hidden" name="shopId" value={s.id.toString()} />
+                    <span className="text-sm font-bold truncate flex-1">
+                      {s.name}{" "}
+                      <span className="font-normal" style={{ color }}>
+                        — {label}
+                        {a.locked ? "" : ` · ${a.daysLeft} يوم`}
+                      </span>
+                      <span className="muted font-normal block text-xs">
+                        حتى {fmtD.format(a.until)}
+                      </span>
+                    </span>
+                    <button type="submit" className="btn-accent px-3 py-1 text-xs font-bold shrink-0">
+                      فعّل/مدّد
+                    </button>
+                  </form>
+                );
+              })}
+            </div>
           </Section>
         </div>
 
