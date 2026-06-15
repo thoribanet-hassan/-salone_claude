@@ -300,6 +300,13 @@ export default function LandingContent({ banner }: { banner: ReactNode }) {
         <Link href="/guide" className="text-sm no-underline" style={{ color: "var(--accent)" }}>
           📖 {locale === "ar" ? "دليل الاستخدام" : locale === "en" ? "User guide" : locale === "hi" ? "उपयोग गाइड" : "ব্যবহার গাইড"}
         </Link>
+
+        {/* المطور */}
+        <div className="mt-5 pt-5 flex flex-col items-center gap-2" style={{ borderTop: "1px solid var(--border)", width: "min(100%, 18rem)" }}>
+          <p className="muted text-xs">{s.developedBy}</p>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/hsa-logo.png" alt="HSA" className="h-12 md:h-14 w-auto" />
+        </div>
       </footer>
     </div>
   );

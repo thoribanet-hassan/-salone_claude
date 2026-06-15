@@ -21,6 +21,7 @@ export interface Strings {
   ctaFinalBody: string;
   ctaFinalBtn: string;
   footerTagline: string;
+  developedBy: string;
   // بطاقة الجوال التوضيحية
   phoneShop: string;
   phoneTicketLabel: string;
@@ -62,6 +63,7 @@ export const T: Record<Locale, Strings> = {
     ctaFinalBody: "ابدأ الآن مجاناً خلال فترة الإطلاق — دقائق وتكون جاهزاً لاستقبال عملائك بلا زحام.",
     ctaFinalBtn: "أنشئ منشأتك مجاناً",
     footerTagline: "نظام إدارة الانتظار في الأماكن المزدحمة",
+    developedBy: "المطور",
     phoneShop: "صالون النخبة للحلاقة",
     phoneTicketLabel: "رقم تذكرتك",
     phoneNumber: "٤٢",
@@ -100,6 +102,7 @@ export const T: Record<Locale, Strings> = {
     ctaFinalBody: "Start now, free during launch — minutes and you're ready to welcome customers without crowds.",
     ctaFinalBtn: "Create your business — free",
     footerTagline: "Queue management for busy places",
+    developedBy: "Developer",
     phoneShop: "Elite Barber Salon",
     phoneTicketLabel: "Your ticket number",
     phoneNumber: "42",
@@ -138,6 +141,7 @@ export const T: Record<Locale, Strings> = {
     ctaFinalBody: "अभी शुरू करें, लॉन्च के दौरान मुफ़्त — कुछ ही मिनटों में बिना भीड़ ग्राहकों के लिए तैयार।",
     ctaFinalBtn: "अपना व्यवसाय बनाएँ — मुफ़्त",
     footerTagline: "भीड़भाड़ वाली जगहों के लिए प्रतीक्षा प्रबंधन",
+    developedBy: "डेवलपर",
     phoneShop: "एलीट बार्बर सैलून",
     phoneTicketLabel: "आपका टिकट नंबर",
     phoneNumber: "42",
@@ -176,6 +180,7 @@ export const T: Record<Locale, Strings> = {
     ctaFinalBody: "এখনই শুরু করুন, লঞ্চের সময় বিনামূল্যে — কয়েক মিনিটেই ভিড় ছাড়া গ্রাহক গ্রহণে প্রস্তুত।",
     ctaFinalBtn: "আপনার ব্যবসা তৈরি করুন — বিনামূল্যে",
     footerTagline: "ভিড়পূর্ণ স্থানের জন্য অপেক্ষা ব্যবস্থাপনা",
+    developedBy: "ডেভেলপার",
     phoneShop: "এলিট বার্বার সেলুন",
     phoneTicketLabel: "আপনার টিকিট নম্বর",
     phoneNumber: "42",
