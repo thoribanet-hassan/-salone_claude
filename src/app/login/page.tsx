@@ -2,6 +2,7 @@ import LoginForm from "./LoginForm";
 import { getServerLocale } from "@/lib/locale-server";
 import { dirFor, fontVarFor } from "@/lib/i18n";
 import { AUTH } from "@/i18n/auth";
+import { supportWhatsApp } from "@/lib/subscription";
 import LangSwitcher from "@/components/LangSwitcher";
 
 export const metadata = { title: "دخول | دورك" };
@@ -9,6 +10,7 @@ export const metadata = { title: "دخول | دورك" };
 export default async function LoginPage() {
   const locale = await getServerLocale();
   const t = AUTH[locale];
+  const forgotWa = supportWhatsApp(t.forgotWhatsappMsg);
   return (
     <main
       className="theme-general min-h-screen flex flex-col items-center justify-center px-5 py-8"
@@ -27,6 +29,17 @@ export default async function LoginPage() {
         <div className="surface p-6">
           <LoginForm t={t} />
         </div>
+        {forgotWa && (
+          <a
+            href={forgotWa}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-center text-sm no-underline"
+            style={{ color: "var(--accent)" }}
+          >
+            🔑 {t.forgotPassword}
+          </a>
+        )}
         <a href="/register" className="muted text-center text-sm no-underline">
           {t.noShop}
         </a>

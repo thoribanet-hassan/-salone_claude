@@ -31,6 +31,8 @@ export interface AuthMsgs {
   loginCode: string;
   loginManager: string;
   loginStaff: string;
+  forgotPassword: string;
+  forgotWhatsappMsg: string;
   loggingIn: string;
   noShop: string;
   errCreds: string;
@@ -70,6 +72,8 @@ export const AUTH: Record<Locale, AuthMsgs> = {
     loginCode: "رمز الدخول",
     loginManager: "دخول المدير",
     loginStaff: "دخول الموظف",
+    forgotPassword: "نسيت كلمة المرور أو الإيميل؟",
+    forgotWhatsappMsg: "السلام عليكم، نسيت بيانات دخولي للوحة دورك (كلمة المرور أو الإيميل) وأحتاج المساعدة في استرجاعها.",
     loggingIn: "جارٍ الدخول…",
     noShop: "ليس لديك منشأة؟ أنشئ منشأة جديدة",
     errCreds: "بيانات الدخول غير صحيحة",
@@ -107,6 +111,8 @@ export const AUTH: Record<Locale, AuthMsgs> = {
     loginCode: "Login code",
     loginManager: "Manager login",
     loginStaff: "Staff login",
+    forgotPassword: "Forgot your password or email?",
+    forgotWhatsappMsg: "Hello, I forgot my Dawrak dashboard login details (password or email) and need help recovering them.",
     loggingIn: "Signing in…",
     noShop: "No business yet? Create a new one",
     errCreds: "Invalid login credentials",
@@ -144,6 +150,8 @@ export const AUTH: Record<Locale, AuthMsgs> = {
     loginCode: "लॉगिन कोड",
     loginManager: "मैनेजर लॉगिन",
     loginStaff: "कर्मचारी लॉगिन",
+    forgotPassword: "पासवर्ड या ईमेल भूल गए?",
+    forgotWhatsappMsg: "नमस्ते, मैं अपने दौरक डैशबोर्ड लॉगिन विवरण (पासवर्ड या ईमेल) भूल गया हूँ और पुनर्प्राप्ति में मदद चाहिए।",
     loggingIn: "साइन इन हो रहा है…",
     noShop: "अभी कोई व्यवसाय नहीं? नया बनाएँ",
     errCreds: "लॉगिन जानकारी ग़लत है",
@@ -181,6 +189,8 @@ export const AUTH: Record<Locale, AuthMsgs> = {
     loginCode: "লগইন কোড",
     loginManager: "ম্যানেজার লগইন",
     loginStaff: "কর্মী লগইন",
+    forgotPassword: "পাসওয়ার্ড বা ইমেল ভুলে গেছেন?",
+    forgotWhatsappMsg: "হ্যালো, আমি আমার দাওরাক ড্যাশবোর্ড লগইন তথ্য (পাসওয়ার্ড বা ইমেল) ভুলে গেছি এবং পুনরুদ্ধারে সাহায্য দরকার।",
     loggingIn: "সাইন ইন হচ্ছে…",
     noShop: "এখনও ব্যবসা নেই? নতুন তৈরি করুন",
     errCreds: "লগইন তথ্য ভুল",
