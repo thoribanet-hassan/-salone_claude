@@ -25,8 +25,25 @@ export async function storeMedia(file: File): Promise<{ url: string; type: Media
   return { url: `/uploads/announcements/${name}`, type: kind.type };
 }
 
+// شعار المنشأة — صور فقط، يُحفظ في public/uploads/logos
+const LOGOS_DIR = path.join(process.cwd(), "public", "uploads", "logos");
+const LOGO_EXT: Record<string, string> = {
+  "image/jpeg": "jpg",
+  "image/png": "png",
+  "image/webp": "webp",
+  "image/gif": "gif",
+};
+export async function storeShopLogo(file: File): Promise<string | null> {
+  const ext = LOGO_EXT[file.type];
+  if (!ext || file.size === 0 || file.size > MAX_MEDIA_BYTES) return null;
+  await mkdir(LOGOS_DIR, { recursive: true });
+  const name = `${randomUUID()}.${ext}`;
+  await writeFile(path.join(LOGOS_DIR, name), Buffer.from(await file.arrayBuffer()));
+  return `/uploads/logos/${name}`;
+}
+
 export async function removeMediaFile(url: string | null): Promise<void> {
-  if (!url || !url.startsWith("/uploads/announcements/")) return;
+  if (!url || !url.startsWith("/uploads/")) return;
   try {
     await unlink(path.join(process.cwd(), "public", url));
   } catch {

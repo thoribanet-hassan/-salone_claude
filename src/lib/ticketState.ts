@@ -32,6 +32,7 @@ export interface TicketState {
   };
   theme: string;
   shopName: string;
+  shopLogo: string | null;
   // ختم زمني للمزامنة
   syncedAt: number;
 }
@@ -148,6 +149,7 @@ export async function getTicketState(token: string): Promise<TicketState | null>
     },
     theme: theme.className,
     shopName: ticket.shop.name,
+    shopLogo: ticket.shop.logoUrl,
     syncedAt: Date.now(),
   };
 }

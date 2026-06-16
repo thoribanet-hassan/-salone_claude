@@ -130,6 +130,8 @@ model Shop {
   ownerName    String       @map("owner_name")
   facilityType FacilityType @map("facility_type") // داخلي: للمظهر والمصطلحات فقط (يُستنتج من النص)
   facilityLabel String      @default("") @map("facility_label") // نوع المنشأة كما كتبه صاحبها — هو الظاهر للزبائن
+  city         String?      // مدينة المنشأة (هوية/عنوان + بيان «أكثر المدن» مستقبلاً)
+  logoUrl      String?      @map("logo_url") // شعار المنشأة — يظهر للزبون على الحجز/التذكرة/شاشة العرض
   shopCode     String       @unique @map("shop_code")
   slug         String       @unique
   plan         Plan         @default(basic)

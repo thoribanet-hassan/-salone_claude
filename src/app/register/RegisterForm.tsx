@@ -39,6 +39,10 @@ export default function RegisterForm({ t }: { t: AuthMsgs }) {
         <input name="ownerName" required placeholder={t.regOwnerPh} className="input-field px-4 py-3 text-lg" />
       </div>
       <div className="flex flex-col gap-2">
+        <label className="font-bold text-sm">{t.regCity}</label>
+        <input name="city" placeholder={t.regCityPh} className="input-field px-4 py-3 text-lg" />
+      </div>
+      <div className="flex flex-col gap-2">
         <label className="font-bold text-sm">{t.regEmail}</label>
         <input name="email" type="email" required placeholder={t.regEmailPh} className="input-field px-4 py-3 text-lg" />
       </div>

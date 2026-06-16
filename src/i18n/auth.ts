@@ -10,6 +10,8 @@ export interface AuthMsgs {
   regHint: string;
   regOwner: string;
   regOwnerPh: string;
+  regCity: string;
+  regCityPh: string;
   regEmail: string;
   regEmailPh: string;
   regPassword: string;
@@ -48,6 +50,8 @@ export const AUTH: Record<Locale, AuthMsgs> = {
     regHint: "كل التفاصيل الأخرى (الموظفون، نظام الزمن، المواعيد…) تُضبط لاحقاً من لوحة التحكم.",
     regOwner: "اسم المالك",
     regOwnerPh: "اسمك",
+    regCity: "المدينة (اختياري)",
+    regCityPh: "مثال: الرياض، جدة، الدمام…",
     regEmail: "البريد الإلكتروني (للدخول)",
     regEmailPh: "you@example.com",
     regPassword: "كلمة المرور",
@@ -83,6 +87,8 @@ export const AUTH: Record<Locale, AuthMsgs> = {
     regHint: "All other details (staff, time system, appointments…) are configured later from the control panel.",
     regOwner: "Owner name",
     regOwnerPh: "Your name",
+    regCity: "City (optional)",
+    regCityPh: "e.g. Riyadh, Jeddah, Dammam…",
     regEmail: "Email (for login)",
     regEmailPh: "you@example.com",
     regPassword: "Password",
@@ -118,6 +124,8 @@ export const AUTH: Record<Locale, AuthMsgs> = {
     regHint: "बाकी सभी विवरण (कर्मचारी, समय प्रणाली, अपॉइंटमेंट…) बाद में कंट्रोल पैनल से सेट होते हैं।",
     regOwner: "मालिक का नाम",
     regOwnerPh: "आपका नाम",
+    regCity: "शहर (वैकल्पिक)",
+    regCityPh: "जैसे रियाद, जेद्दा, दम्माम…",
     regEmail: "ईमेल (लॉगिन के लिए)",
     regEmailPh: "you@example.com",
     regPassword: "पासवर्ड",
@@ -153,6 +161,8 @@ export const AUTH: Record<Locale, AuthMsgs> = {
     regHint: "বাকি সব বিবরণ (কর্মী, সময় ব্যবস্থা, অ্যাপয়েন্টমেন্ট…) পরে কন্ট্রোল প্যানেল থেকে সেট হয়।",
     regOwner: "মালিকের নাম",
     regOwnerPh: "আপনার নাম",
+    regCity: "শহর (ঐচ্ছিক)",
+    regCityPh: "যেমন রিয়াদ, জেদ্দা, দাম্মাম…",
     regEmail: "ইমেল (লগইনের জন্য)",
     regEmailPh: "you@example.com",
     regPassword: "পাসওয়ার্ড",

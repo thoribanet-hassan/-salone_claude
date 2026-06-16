@@ -95,6 +95,15 @@ export interface DashMsgs {
   removeMedia: string;
   saveEdits: string;
   addAd: string;
+  // هوية المنشأة
+  identityTitle: string;
+  identityLead: string;
+  cityLabel: string;
+  cityPh: string;
+  logoLabel: string;
+  logoHint: string;
+  removeLogo: string;
+  saveIdentity: string;
   // كلمة المرور
   pwTitle: string;
   pwLead: string;
@@ -200,6 +209,14 @@ export const DASH: Record<Locale, DashMsgs> = {
     removeMedia: "إزالة الوسائط",
     saveEdits: "حفظ التعديلات",
     addAd: "إضافة الإعلان",
+    identityTitle: "هوية المنشأة 🪧",
+    identityLead: "شعارك ومدينتك. الشعار يظهر للزبون على صفحة الحجز وتذكرته وشاشة العرض.",
+    cityLabel: "المدينة",
+    cityPh: "مثال: الرياض، جدة، الدمام…",
+    logoLabel: "شعار المنشأة (صورة)",
+    logoHint: "صورة مربّعة تظهر أفضل (PNG/JPG، حتى 40MB).",
+    removeLogo: "إزالة الشعار الحالي",
+    saveIdentity: "حفظ الهوية",
     pwTitle: "كلمة المرور 🔑",
     pwLead: "غيّر كلمة مرور دخولك للوحة. إن نسيتها كلياً، تواصل مع فريق دورك لإعادة تعيينها.",
     pwCurrent: "كلمة المرور الحالية",
@@ -302,6 +319,14 @@ export const DASH: Record<Locale, DashMsgs> = {
     removeMedia: "Remove media",
     saveEdits: "Save changes",
     addAd: "Add announcement",
+    identityTitle: "Business identity 🪧",
+    identityLead: "Your logo and city. The logo shows to customers on the booking page, their ticket, and the display screen.",
+    cityLabel: "City",
+    cityPh: "e.g. Riyadh, Jeddah, Dammam…",
+    logoLabel: "Business logo (image)",
+    logoHint: "A square image looks best (PNG/JPG, up to 40MB).",
+    removeLogo: "Remove current logo",
+    saveIdentity: "Save identity",
     pwTitle: "Password 🔑",
     pwLead: "Change the password you sign in with. If you forget it entirely, contact the Dawrak team to reset it.",
     pwCurrent: "Current password",
@@ -404,6 +429,14 @@ export const DASH: Record<Locale, DashMsgs> = {
     removeMedia: "मीडिया हटाएँ",
     saveEdits: "बदलाव सहेजें",
     addAd: "विज्ञापन जोड़ें",
+    identityTitle: "व्यवसाय की पहचान 🪧",
+    identityLead: "आपका लोगो और शहर। लोगो ग्राहक को बुकिंग पेज, उसके टिकट और प्रदर्शन स्क्रीन पर दिखता है।",
+    cityLabel: "शहर",
+    cityPh: "जैसे रियाद, जेद्दा, दम्माम…",
+    logoLabel: "व्यवसाय का लोगो (छवि)",
+    logoHint: "वर्गाकार छवि सबसे अच्छी लगती है (PNG/JPG, 40MB तक)।",
+    removeLogo: "मौजूदा लोगो हटाएँ",
+    saveIdentity: "पहचान सहेजें",
     pwTitle: "पासवर्ड 🔑",
     pwLead: "जिस पासवर्ड से आप साइन इन करते हैं उसे बदलें। पूरी तरह भूल जाएँ तो रीसेट के लिए दौरक टीम से संपर्क करें।",
     pwCurrent: "मौजूदा पासवर्ड",
@@ -506,6 +539,14 @@ export const DASH: Record<Locale, DashMsgs> = {
     removeMedia: "মিডিয়া সরান",
     saveEdits: "পরিবর্তন সংরক্ষণ",
     addAd: "বিজ্ঞাপন যোগ করুন",
+    identityTitle: "ব্যবসার পরিচিতি 🪧",
+    identityLead: "আপনার লোগো ও শহর। লোগো গ্রাহককে বুকিং পেজ, তার টিকিট ও প্রদর্শন স্ক্রিনে দেখায়।",
+    cityLabel: "শহর",
+    cityPh: "যেমন রিয়াদ, জেদ্দা, দাম্মাম…",
+    logoLabel: "ব্যবসার লোগো (ছবি)",
+    logoHint: "বর্গাকার ছবি সবচেয়ে ভালো দেখায় (PNG/JPG, ৪০MB পর্যন্ত)।",
+    removeLogo: "বর্তমান লোগো সরান",
+    saveIdentity: "পরিচিতি সংরক্ষণ",
     pwTitle: "পাসওয়ার্ড 🔑",
     pwLead: "যে পাসওয়ার্ড দিয়ে সাইন ইন করেন তা পরিবর্তন করুন। সম্পূর্ণ ভুলে গেলে রিসেটের জন্য দাওরাক টিমের সাথে যোগাযোগ করুন।",
     pwCurrent: "বর্তমান পাসওয়ার্ড",

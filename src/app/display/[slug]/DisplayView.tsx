@@ -10,6 +10,7 @@ interface State {
   found: boolean;
   shopName: string;
   facilityLabel: string;
+  logoUrl: string | null;
   theme: string;
   isOpen: boolean;
   serving: { number: number; barber: string | null }[];
@@ -110,9 +111,15 @@ export default function DisplayView({
   return (
     <div className="min-h-screen flex flex-col p-6 md:p-10">
       <header className="flex items-center justify-between mb-6">
-        <div>
-          <p className="muted text-lg md:text-2xl">{s.facilityLabel}</p>
-          <h1 className="text-3xl md:text-5xl font-extrabold">{s.shopName}</h1>
+        <div className="flex items-center gap-4">
+          {s.logoUrl && (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img src={s.logoUrl} alt={s.shopName} className="h-16 md:h-24 w-auto object-contain shrink-0" />
+          )}
+          <div>
+            <p className="muted text-lg md:text-2xl">{s.facilityLabel}</p>
+            <h1 className="text-3xl md:text-5xl font-extrabold">{s.shopName}</h1>
+          </div>
         </div>
         <div className="flex items-center gap-2">
           <LangSwitcher current={locale} />

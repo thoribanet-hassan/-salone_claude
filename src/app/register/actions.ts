@@ -40,6 +40,7 @@ export async function registerAction(
 ): Promise<RegisterState> {
   const shopName = String(formData.get("shopName") ?? "").trim();
   const ownerName = String(formData.get("ownerName") ?? "").trim();
+  const city = String(formData.get("city") ?? "").trim() || null;
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const password = String(formData.get("password") ?? "");
   const facilityLabel = String(formData.get("facilityLabel") ?? "").trim();
@@ -63,6 +64,7 @@ export async function registerAction(
     data: {
       name: shopName,
       ownerName,
+      city,
       facilityType,
       facilityLabel,
       slug,

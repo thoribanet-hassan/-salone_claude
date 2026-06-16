@@ -95,6 +95,10 @@ export default async function JoinPage({
           <LangSwitcher current={locale} />
         </div>
         <header className="text-center">
+          {shop.logoUrl && (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img src={shop.logoUrl} alt={shop.name} className="h-20 w-20 object-contain rounded-2xl mx-auto mb-2" />
+          )}
           <p className="muted text-sm mb-1">{shop.facilityLabel || theme.label}</p>
           <h1 className="text-3xl font-extrabold">{shop.name}</h1>
         </header>

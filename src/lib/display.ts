@@ -6,6 +6,7 @@ export interface DisplayState {
   found: boolean;
   shopName: string;
   facilityLabel: string;
+  logoUrl: string | null;
   theme: string;
   isOpen: boolean;
   serving: { number: number; barber: string | null }[];
@@ -107,6 +108,7 @@ export async function displayStateFor(slug: string): Promise<DisplayState | null
     found: true,
     shopName: shop.name,
     facilityLabel: shop.facilityLabel || themeFor(shop.facilityType).label,
+    logoUrl: shop.logoUrl,
     theme: themeFor(shop.facilityType).className,
     isOpen: !!shop.settings?.isOpen,
     serving: serving.map((t) => ({ number: t.ticketNumber, barber: t.barber?.name ?? null })),

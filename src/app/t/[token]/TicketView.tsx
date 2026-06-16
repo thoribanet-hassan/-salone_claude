@@ -36,6 +36,7 @@ interface State {
     showCountdown: boolean;
   };
   shopName: string;
+  shopLogo: string | null;
 }
 
 const POLL_MS = 5000;
@@ -462,7 +463,11 @@ export default function TicketView({
         </div>
       )}
 
-      <header className="text-center mt-2">
+      <header className="text-center mt-2 flex flex-col items-center">
+        {s.shopLogo && (
+          /* eslint-disable-next-line @next/next/no-img-element */
+          <img src={s.shopLogo} alt={s.shopName} className="h-14 w-14 object-contain rounded-xl mb-1" />
+        )}
         <p className="muted text-sm">{s.shopName}</p>
       </header>
 

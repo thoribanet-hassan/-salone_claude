@@ -6,13 +6,40 @@ import { prisma } from "@/lib/db";
 import { getSession, verifyPassword, hashPassword } from "@/lib/auth";
 import { generateLoginCode } from "@/lib/shop";
 import { setBarberStatus } from "@/lib/queue";
-import { storeMedia, removeMediaFile } from "@/lib/media";
+import { storeMedia, storeShopLogo, removeMediaFile } from "@/lib/media";
 import type { CountdownMode, AnnouncementPlacement } from "@prisma/client";
 
 async function requireManager() {
   const s = await getSession();
   if (!s || s.role !== "manager") redirect("/login");
   return { userId: BigInt(s.userId), shopId: BigInt(s.shopId) };
+}
+
+// ===== هوية المنشأة: المدينة + الشعار (يظهر للزبون) =====
+export async function updateIdentityAction(formData: FormData): Promise<void> {
+  const { shopId } = await requireManager();
+  const city = String(formData.get("city") ?? "").trim() || null;
+  const removeLogo = formData.get("removeLogo") === "on";
+
+  const shop = await prisma.shop.findUnique({ where: { id: shopId }, select: { logoUrl: true } });
+  let logoUrl = shop?.logoUrl ?? null;
+
+  const file = formData.get("logo");
+  if (file instanceof File && file.size > 0) {
+    const stored = await storeShopLogo(file);
+    if (stored) {
+      await removeMediaFile(shop?.logoUrl ?? null);
+      logoUrl = stored;
+    }
+  } else if (removeLogo) {
+    await removeMediaFile(shop?.logoUrl ?? null);
+    logoUrl = null;
+  }
+
+  await prisma.shop.update({ where: { id: shopId }, data: { city, logoUrl } });
+  revalidatePath("/dashboard");
+  revalidatePath("/j/[slug]", "page");
+  redirect("/dashboard#identity");
 }
 
 // ===== كلمة مرور المدير: تغييرها من اللوحة (يتطلب كلمة المرور الحالية) =====

@@ -31,6 +31,7 @@ import {
   saveShopAnnouncementAction,
   deleteShopAnnouncementAction,
   changePasswordAction,
+  updateIdentityAction,
 } from "./actions";
 
 export const metadata = { title: "لوحة التحكم | دورك" };
@@ -249,9 +250,13 @@ export default async function DashboardPage({
           </a>
         )}
         <header className="text-center">
+          {shop.logoUrl && (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img src={shop.logoUrl} alt={shop.name} className="h-16 w-16 object-contain rounded-xl mx-auto mb-2" />
+          )}
           <p className="muted text-sm">{shop.facilityLabel || theme.label}</p>
           <h1 className="text-2xl font-extrabold">{shop.name}</h1>
-          <p className="muted text-xs mt-1">{t.shopCode} {shop.shopCode}</p>
+          <p className="muted text-xs mt-1">{t.shopCode} {shop.shopCode}{shop.city ? ` · ${shop.city}` : ""}</p>
           <div className="flex gap-2 justify-center mt-3 text-sm flex-wrap">
             <a href="/dashboard/stats" className="surface px-3 py-2 font-bold no-underline">{t.statsLink}</a>
             <a href={`/display/${shop.slug}`} target="_blank" className="surface px-3 py-2 font-bold no-underline">{t.displayLink}</a>
@@ -593,6 +598,34 @@ export default async function DashboardPage({
             </div>
           </section>
         )}
+
+        {/* هوية المنشأة — الشعار والمدينة */}
+        <section id="identity" className="surface p-5">
+          <h2 className="font-extrabold mb-1">{t.identityTitle}</h2>
+          <p className="muted text-sm mb-3">{t.identityLead}</p>
+          <form action={updateIdentityAction} className="flex flex-col gap-3">
+            <label className="flex flex-col gap-1">
+              <span className="text-sm font-bold">{t.cityLabel}</span>
+              <input name="city" defaultValue={shop.city ?? ""} placeholder={t.cityPh} className="input-field px-3 py-2" />
+            </label>
+            <div className="flex flex-col gap-1">
+              <span className="text-sm font-bold">{t.logoLabel}</span>
+              {shop.logoUrl && (
+                <div className="flex items-center gap-3 my-1">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={shop.logoUrl} alt={shop.name} className="h-14 w-14 object-contain rounded-lg" style={{ background: "var(--surface-2)" }} />
+                  <label className="flex items-center gap-2 text-xs muted">
+                    <input type="checkbox" name="removeLogo" className="w-4 h-4" />
+                    {t.removeLogo}
+                  </label>
+                </div>
+              )}
+              <input name="logo" type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="input-field p-2 text-xs" />
+              <span className="muted text-xs">{t.logoHint}</span>
+            </div>
+            <button className="btn-accent py-3 font-bold">{t.saveIdentity}</button>
+          </form>
+        </section>
 
         {/* كلمة المرور — تغييرها (يتطلب الحالية) */}
         <section id="password" className="surface p-5">
