@@ -103,8 +103,11 @@
 ### التقييم
 - تقييم سريع بعد الخدمة (1-5 نجوم) → حدث SERVICE_RATED + متوسط في لوحة المؤسس.
 
+### هوية المنشأة
+- شعار المنشأة (`logoUrl`) يُرفع من بطاقة «هوية المنشأة» في اللوحة، ويظهر للزبون على الحجز/التذكرة/شاشة العرض/رأس اللوحة. مدينة المنشأة (`city`) نص حر عند التسجيل + قابلة للتعديل.
+
 ### التسجيل والمصادقة
-- `/register` — تسجيل ذاتي (نوع المنشأة نص حر + الاسم) ينشئ منشأة + مدير(=موظف) + خدمة افتراضية.
+- `/register` — تسجيل ذاتي (نوع المنشأة نص حر + الاسم + المدينة) ينشئ منشأة + مدير(=موظف) + خدمة افتراضية.
 - `src/lib/auth.ts` — scrypt + كوكي `salon_session` موقّع بـ HMAC + `generateTempPassword()`.
 - `/login` — مدير (إيميل+كلمة) أو موظف (رمز المحل + رمز الدخول).
 - **استعادة كلمة المرور:** المدير يغيّر كلمته من بطاقة في `/dashboard` (تتطلب الحالية)؛ والمؤسس يعيد تعيين كلمة مدير منشأة من `/founder` (كلمة مؤقتة عبر كوكي flash) لحالة النسيان الكامل.
@@ -137,10 +140,10 @@
 
 ---
 
-## 7. الهجرات (Prisma Migrations) — 24 هجرة
+## 7. الهجرات (Prisma Migrations) — 25 هجرة
 
-من `init` (2026-06-04) حتى `walkin_permission` (2026-06-16). أبرزها:
-services_and_durations، appointments، appointment_slots_and_hours، events_and_ticket_source، announcements (+targeting +media +shop_owned)، service_rating، push_subscriptions، subscription_trial_lock، display_lead_minutes، walkin_permission.
+من `init` (2026-06-04) حتى `shop_identity` (2026-06-16). أبرزها:
+services_and_durations، appointments، appointment_slots_and_hours، events_and_ticket_source، announcements (+targeting +media +shop_owned)، service_rating، push_subscriptions، subscription_trial_lock، display_lead_minutes، walkin_permission، shop_identity.
 
 ---
 
