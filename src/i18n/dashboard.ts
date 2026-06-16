@@ -59,6 +59,8 @@ export interface DashMsgs {
   makeUnavailable: string;
   makeAvailable: string;
   regenCode: string;
+  walkinYes: string; // مخوّل بإضافة عملاء (اضغط للسحب)
+  walkinNo: string; // غير مخوّل (اضغط للمنح)
   disableAccount: string;
   enableAccount: string;
   deleteForever: string;
@@ -165,6 +167,8 @@ export const DASH: Record<Locale, DashMsgs> = {
     makeUnavailable: "اجعله غير متاح",
     makeAvailable: "اجعله متاحاً",
     regenCode: "تجديد الرمز",
+    walkinYes: "✓ يضيف عملاء",
+    walkinNo: "✗ يضيف عملاء",
     disableAccount: "إيقاف الحساب",
     enableAccount: "تفعيل الحساب",
     deleteForever: "حذف نهائي",
@@ -265,6 +269,8 @@ export const DASH: Record<Locale, DashMsgs> = {
     makeUnavailable: "Make unavailable",
     makeAvailable: "Make available",
     regenCode: "Regenerate code",
+    walkinYes: "✓ Can add customers",
+    walkinNo: "✗ Can add customers",
     disableAccount: "Disable account",
     enableAccount: "Enable account",
     deleteForever: "Delete permanently",
@@ -365,6 +371,8 @@ export const DASH: Record<Locale, DashMsgs> = {
     makeUnavailable: "अनुपलब्ध करें",
     makeAvailable: "उपलब्ध करें",
     regenCode: "कोड बदलें",
+    walkinYes: "✓ ग्राहक जोड़ सकता है",
+    walkinNo: "✗ ग्राहक जोड़ सकता है",
     disableAccount: "खाता बंद करें",
     enableAccount: "खाता चालू करें",
     deleteForever: "स्थायी रूप से हटाएँ",
@@ -465,6 +473,8 @@ export const DASH: Record<Locale, DashMsgs> = {
     makeUnavailable: "অনুপলব্ধ করুন",
     makeAvailable: "উপলব্ধ করুন",
     regenCode: "কোড বদলান",
+    walkinYes: "✓ গ্রাহক যোগ করতে পারে",
+    walkinNo: "✗ গ্রাহক যোগ করতে পারে",
     disableAccount: "অ্যাকাউন্ট বন্ধ",
     enableAccount: "অ্যাকাউন্ট চালু",
     deleteForever: "স্থায়ীভাবে মুছুন",

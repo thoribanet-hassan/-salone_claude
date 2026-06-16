@@ -19,6 +19,7 @@ import {
   addBarberAction,
   setTasksAction,
   regenerateCodeAction,
+  toggleWalkinPermAction,
   toggleBarberAction,
   setAvailabilityAction,
   deleteBarberAction,
@@ -307,6 +308,7 @@ export default async function DashboardPage({
               status={manager.status}
               isManual={isManual}
               noTimes={noTimes}
+              canAddWalkin
               waitingCount={waitingAssigned + waitingPool}
               skipped={skipped.map((t) => ({ id: t.id.toString(), ticketNumber: t.ticketNumber, customerName: t.customerName }))}
               embedded
@@ -480,6 +482,12 @@ export default async function DashboardPage({
                       <form action={regenerateCodeAction}>
                         <input type="hidden" name="barberId" value={b.id.toString()} />
                         <button className="px-2 py-1 rounded surface">{t.regenCode}</button>
+                      </form>
+                      <form action={toggleWalkinPermAction}>
+                        <input type="hidden" name="barberId" value={b.id.toString()} />
+                        <button className="px-2 py-1 rounded surface" style={b.canAddWalkin ? { color: "var(--accent)" } : undefined}>
+                          {b.canAddWalkin ? t.walkinYes : t.walkinNo}
+                        </button>
                       </form>
                       <form action={toggleBarberAction}>
                         <input type="hidden" name="barberId" value={b.id.toString()} />

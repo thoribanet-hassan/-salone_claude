@@ -20,6 +20,13 @@ export interface ServeMsgs {
   skippedToday: string;
   restore: string;
   logout: string;
+  // إضافة عميل يدوياً (walk-in / اتصال هاتفي)
+  addWalkinTitle: string;
+  walkinNamePh: string;
+  addWalkinBtn: string;
+  errWalkinName: string;
+  errWalkinPerm: string;
+  errWalkinLocked: string;
   // أخطاء (تطابق قيم queue.ts العربية للتعريب العكسي)
   errSession: string;
   errBarberMissing: string;
@@ -49,6 +56,12 @@ export const SERVE: Record<Locale, ServeMsgs> = {
     skippedToday: "عملاء تم تخطّيهم اليوم",
     restore: "إعادة للطابور",
     logout: "تسجيل الخروج",
+    addWalkinTitle: "أضف عميلاً (حضر أو اتصل)",
+    walkinNamePh: "اسم العميل",
+    addWalkinBtn: "➕ أضف للطابور",
+    errWalkinName: "اكتب اسم العميل",
+    errWalkinPerm: "لا تملك صلاحية إضافة عملاء",
+    errWalkinLocked: "الإضافة غير متاحة الآن",
     errSession: "انتهت الجلسة",
     errBarberMissing: "الحلاق غير موجود",
     errAlreadyServing: "أنهِ العميل الحالي أولاً",
@@ -75,6 +88,12 @@ export const SERVE: Record<Locale, ServeMsgs> = {
     skippedToday: "Customers skipped today",
     restore: "Back to queue",
     logout: "Sign out",
+    addWalkinTitle: "Add a customer (walked in or called)",
+    walkinNamePh: "Customer name",
+    addWalkinBtn: "➕ Add to queue",
+    errWalkinName: "Enter the customer's name",
+    errWalkinPerm: "You don't have permission to add customers",
+    errWalkinLocked: "Adding is unavailable right now",
     errSession: "Session ended",
     errBarberMissing: "Provider not found",
     errAlreadyServing: "Finish the current customer first",
@@ -101,6 +120,12 @@ export const SERVE: Record<Locale, ServeMsgs> = {
     skippedToday: "आज छोड़े गए ग्राहक",
     restore: "कतार में वापस",
     logout: "साइन आउट",
+    addWalkinTitle: "ग्राहक जोड़ें (आया या कॉल किया)",
+    walkinNamePh: "ग्राहक का नाम",
+    addWalkinBtn: "➕ कतार में जोड़ें",
+    errWalkinName: "ग्राहक का नाम लिखें",
+    errWalkinPerm: "आपको ग्राहक जोड़ने की अनुमति नहीं है",
+    errWalkinLocked: "अभी जोड़ना उपलब्ध नहीं",
     errSession: "सत्र समाप्त",
     errBarberMissing: "कर्मचारी नहीं मिला",
     errAlreadyServing: "पहले वर्तमान ग्राहक पूरा करें",
@@ -127,6 +152,12 @@ export const SERVE: Record<Locale, ServeMsgs> = {
     skippedToday: "আজ এড়ানো গ্রাহক",
     restore: "সারিতে ফেরান",
     logout: "সাইন আউট",
+    addWalkinTitle: "গ্রাহক যোগ করুন (এসেছেন বা কল করেছেন)",
+    walkinNamePh: "গ্রাহকের নাম",
+    addWalkinBtn: "➕ সারিতে যোগ করুন",
+    errWalkinName: "গ্রাহকের নাম লিখুন",
+    errWalkinPerm: "গ্রাহক যোগ করার অনুমতি আপনার নেই",
+    errWalkinLocked: "এখন যোগ করা যাচ্ছে না",
     errSession: "সেশন শেষ",
     errBarberMissing: "কর্মী পাওয়া যায়নি",
     errAlreadyServing: "আগে বর্তমান গ্রাহক সম্পন্ন করুন",

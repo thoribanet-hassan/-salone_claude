@@ -211,6 +211,15 @@ export async function regenerateCodeAction(formData: FormData) {
   revalidatePath("/dashboard");
 }
 
+// منح/سحب صلاحية إضافة عملاء يدوياً (walk-in) لموظف — المدير حصراً
+export async function toggleWalkinPermAction(formData: FormData) {
+  const { shopId } = await requireManager();
+  const barberId = BigInt(String(formData.get("barberId")));
+  const b = await prisma.user.findFirst({ where: { id: barberId, shopId, role: "barber" } });
+  if (b) await prisma.user.update({ where: { id: barberId }, data: { canAddWalkin: !b.canAddWalkin } });
+  revalidatePath("/dashboard");
+}
+
 // توفّر مؤقّت (غداء/مشوار): متاح ⇄ غير متاح — لا يمسّ الحساب
 export async function setAvailabilityAction(formData: FormData) {
   await requireManager();

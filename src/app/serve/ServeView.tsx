@@ -9,6 +9,7 @@ import {
   toggleStatusAction,
   markReadyAction,
   restoreAction,
+  addWalkinAction,
 } from "./actions";
 import type { ServeMsgs } from "@/i18n/serve";
 
@@ -36,6 +37,7 @@ interface Props {
   current: Current | null;
   skipped?: Skipped[];
   embedded?: boolean; // داخل لوحة المدير: نخفي الترويسة والخروج
+  canAddWalkin?: boolean; // صلاحية إضافة عميل يدوياً
   t: ServeMsgs;
 }
 
@@ -45,6 +47,18 @@ export default function ServeView(props: Props) {
   const [pending, start] = useTransition();
   const [msg, setMsg] = useState<string | null>(null);
   const [readyMinutes, setReadyMinutes] = useState(10);
+  const [walkinName, setWalkinName] = useState("");
+
+  const addWalkin = () => {
+    const nm = walkinName.trim();
+    if (!nm) return;
+    start(async () => {
+      const r = await addWalkinAction(nm);
+      setMsg(r?.error ?? null);
+      if (!r?.error) setWalkinName("");
+      router.refresh();
+    });
+  };
 
   // تحديث دوري خفيف ليرى الحلاق تغيّر الطابور
   useEffect(() => {
@@ -167,6 +181,29 @@ export default function ServeView(props: Props) {
           </div>
         )}
       </div>
+
+      {/* إضافة عميل يدوياً (حضر مباشرةً أو اتصل) — للمخوَّلين فقط */}
+      {props.canAddWalkin && (
+        <div className="surface p-4">
+          <p className="font-bold text-sm mb-2">{t.addWalkinTitle}</p>
+          <div className="flex gap-2">
+            <input
+              value={walkinName}
+              onChange={(e) => setWalkinName(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") addWalkin(); }}
+              placeholder={t.walkinNamePh}
+              className="input-field px-3 py-2 flex-1"
+            />
+            <button
+              disabled={pending || !walkinName.trim()}
+              onClick={addWalkin}
+              className="btn-accent px-4 py-2 font-bold shrink-0"
+            >
+              {t.addWalkinBtn}
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* العملاء المتخطّون — مع إمكانية الإعادة */}
       {props.skipped && props.skipped.length > 0 && (

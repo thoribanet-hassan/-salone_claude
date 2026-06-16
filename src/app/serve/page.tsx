@@ -66,6 +66,7 @@ export default async function ServePage() {
         status={barber.status}
         isManual={isManual}
         noTimes={noTimes}
+        canAddWalkin={session.role === "manager" || barber.canAddWalkin}
         waitingCount={waitingAssigned + waitingPool}
         skipped={skipped.map((s) => ({
           id: s.id.toString(),

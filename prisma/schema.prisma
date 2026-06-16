@@ -190,6 +190,8 @@ model User {
   passwordHash   String?    @map("password_hash")
   loginCode      String?    @map("login_code")
   role           Role
+  // صلاحية إضافة عميل يدوياً (walk-in) من شاشة الخدمة — المدير دائماً، والموظف إن خوّله المدير
+  canAddWalkin   Boolean    @default(false) @map("can_add_walkin")
   status         UserStatus @default(available)
   avgServiceTime Int        @default(20) @map("avg_service_time")
   isActive       Boolean    @default(true) @map("is_active")
