@@ -79,7 +79,8 @@
 
 ### لوحات التحكم
 - `/dashboard` — المدير (إعدادات، موظفون، خدمات، مصفوفة مدد، QR، إحصاءات مضمّنة، إعلانات المحل، بطاقة دليل الاستخدام، بطاقة دعم واتساب).
-- `/serve` — شاشة الموظف (نادِ التالي / إكمال / تخطّي / تبديل التوفر).
+- `/serve` — شاشة الموظف (نادِ التالي / إكمال / تخطّي / تبديل التوفر / **إضافة عميل يدوياً walk-in**).
+- **إضافة عميل يدوي (walk-in):** زرّ «أضف عميل» في شاشة الخدمة ولوحة المدير ينشئ دوراً مباشرةً (للمتّصل هاتفياً أو من دخل بلا مسح) — المدير دائماً، والموظف إن خوّله المدير (`user.canAddWalkin`). يدخل الطابور المشترك بوسم `source=walkin`.
 - `/dashboard/stats` — إحصاءات لكل موظف (عدد مكتمل + إيراد) يومي/شهري.
 - `/display/[slug]` — شاشة عرض داخلية (TV): قسم علوي وامض «استعدوا — حان دوركم» (الأوشك أن يُنادَوا، محفّز ذكي حسب الوضع، عتبة قابلة للضبط لكل منشأة `displayLeadMinutes` افتراضي ٣ د) + «الآن يُخدَم» + القادمون.
 - `/founder` — لوحة المؤسس (محميّة بكلمة مرور من البيئة): مقاييس المنتج، الإعلانات، صلاحيات البث الذاتي، الاشتراكات.
@@ -136,10 +137,10 @@
 
 ---
 
-## 7. الهجرات (Prisma Migrations) — 23 هجرة
+## 7. الهجرات (Prisma Migrations) — 24 هجرة
 
-من `init` (2026-06-04) حتى `display_lead_minutes` (2026-06-15). أبرزها:
-services_and_durations، appointments، appointment_slots_and_hours، events_and_ticket_source، announcements (+targeting +media +shop_owned)، service_rating، push_subscriptions، subscription_trial_lock، display_lead_minutes.
+من `init` (2026-06-04) حتى `walkin_permission` (2026-06-16). أبرزها:
+services_and_durations، appointments، appointment_slots_and_hours، events_and_ticket_source، announcements (+targeting +media +shop_owned)، service_rating، push_subscriptions، subscription_trial_lock، display_lead_minutes، walkin_permission.
 
 ---
 
